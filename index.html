@@ -219,6 +219,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic',sa
     </div>
     <div class="preview" id="preview"><div class="ph">↑ 生年月日を入れると本質タイプが表示されます</div></div>
     <div class="sheet-section">5アニマル（任意・同じ動物でも個別化）<a href="https://www.doubutsu-uranai.com/uranai_chara_5animals.php" target="_blank" rel="noopener">公式で調べる ↗</a></div>
+    <div style="font-size:11px;color:#8e8e93;line-height:1.6;margin-bottom:8px;">「公式で調べる」を開き、上で入れた生年月日を入力 → 出てきた<b>表面・意思・希望・隠れ</b>を下で選ぶだけ。（空欄のままでもOK）</div>
     <div class="facet-grid" id="facet-grid"></div>
     <button class="sheet-save" id="save-btn" onclick="saveStaff()" disabled style="margin-top:16px">保存する</button>
     <button class="sheet-cancel" onclick="closeSheet()">キャンセル</button>
@@ -341,8 +342,9 @@ function fiveStrip(s){
 function fiveAnimalDetail(s){
  const set=FACETS.filter(f=>s[f.k]);
  if(!set.length){
+  const bd=`${s.y}年${s.m}月${s.d}日`;
   return `<div class="ctitle" style="margin:14px 2px 8px">5アニマル ―― 同じ動物でも個別化</div>
-   <div class="cta-card"><div class="ct">この人の「表面・意思・希望・隠れ」は未設定です</div><div class="cd">本質以外の4匹は公式の非公開計算です。下のボタンで4匹を調べて登録すると、同じ動物の人とも違う個別カルテになります。</div><a href="https://www.doubutsu-uranai.com/uranai_chara_5animals.php" target="_blank" rel="noopener">公式で調べる ↗</a><button onclick="openEdit(curStaff)">編集して入力</button></div>`;
+   <div class="cta-card"><div class="ct">「表面・意思・希望・隠れ」は未設定です</div><div class="cd">① 公式サイトを開く → ② <b>${bd}</b> を入力 → ③ 出てきた4匹を「編集」で選ぶだけ。これで同じ動物の人とも違う個別カルテになります。</div><a href="https://www.doubutsu-uranai.com/uranai_chara_5animals.php" target="_blank" rel="noopener">① 公式で調べる ↗</a><button onclick="openEdit(curStaff)">③ 編集して入力</button></div>`;
  }
  return `<div class="ctitle" style="margin:14px 2px 8px">5アニマル ―― 本質以外の4つの顔</div>`+
   set.map(f=>`<div class="facet-card"><div class="fh"><span class="fbadge">${f.emoji}</span><span class="ft">${f.label}：${EMOJI[s[f.k]]} ${s[f.k]}</span><span class="facet-pct">${f.pct}</span></div><div class="fsub">${f.sub}</div><div class="fbody" style="margin-top:5px">${f.frame(s[f.k])}</div></div>`).join('');
