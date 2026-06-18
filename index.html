@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#4F46E5">
+<title>ANIMATCH｜動物タイプ組織サポート</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;}
+:root{--ind:#4F46E5;--ind2:#7C3AED;}
+html,body{height:100%;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic',sans-serif;background:#e9e9ef;display:flex;justify-content:center;align-items:stretch;}
+#app{width:100%;max-width:440px;background:#f2f2f7;min-height:100vh;height:100vh;position:relative;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 0 60px rgba(0,0,0,.12);}
+@media(min-width:480px){body{align-items:center;padding:20px;}#app{height:calc(100vh - 40px);max-height:900px;border-radius:32px;}}
+
+/* screens */
+.scr{position:absolute;inset:0;display:flex;flex-direction:column;background:#f2f2f7;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);}
+.scr.active{transform:translateX(0);}
+@media(min-width:480px){#app{border-radius:32px;}.scr{border-radius:32px;overflow:hidden;}}
+
+/* header */
+.hdr{background:#fff;padding:14px 18px;border-bottom:1px solid #e5e5ea;display:flex;align-items:center;gap:10px;flex-shrink:0;padding-top:max(14px,env(safe-area-inset-top));}
+.hdr .back{font-size:16px;color:var(--ind);cursor:pointer;border:none;background:none;font-weight:500;padding:4px 0;}
+.hdr h1{font-size:16px;font-weight:800;color:#1c1c1e;flex:1;}
+.hdr .logo{font-size:19px;font-weight:900;color:var(--ind);letter-spacing:-1px;line-height:1;}
+.hdr .sub{font-size:10px;color:#8e8e93;margin-top:2px;}
+.hdr .act{font-size:14px;color:var(--ind);font-weight:600;border:none;background:none;cursor:pointer;}
+
+.scroll{flex:1;overflow-y:auto;padding:14px;-webkit-overflow-scrolling:touch;}
+.card{background:#fff;border-radius:14px;padding:14px;margin-bottom:11px;box-shadow:0 1px 3px rgba(0,0,0,.06);}
+.ctitle{font-size:11px;font-weight:700;color:#8e8e93;text-transform:uppercase;letter-spacing:.5px;margin-bottom:9px;}
+
+/* staff row */
+.add-btn{width:100%;background:#EEF2FF;color:var(--ind);border:1.5px dashed #C7D2FE;border-radius:12px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:11px;}
+.add-btn:active{background:#E0E7FF;}
+.srow{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid #f4f4f6;cursor:pointer;}
+.srow:last-child{border-bottom:none;}
+.srow:active{opacity:.55;}
+.semoji{font-size:26px;width:44px;height:44px;border-radius:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.sinfo{flex:1;min-width:0;}
+.sname{font-size:14px;font-weight:700;color:#1c1c1e;}
+.ssub{font-size:11px;color:#8e8e93;margin-top:2px;}
+.gbadge{font-size:9px;font-weight:800;padding:2px 7px;border-radius:20px;display:inline-block;}
+.g-MOON{background:#EDE9FE;color:#7C3AED;}.g-EARTH{background:#DBEAFE;color:#2563EB;}.g-SUN{background:#FEF3C7;color:#D97706;}
+.chev{color:#C7C7CC;font-size:14px;}
+.empty{text-align:center;color:#8e8e93;font-size:13px;padding:30px 10px;line-height:1.7;}
+
+/* detail */
+.dhero{padding:22px 20px;text-align:center;color:#fff;flex-shrink:0;}
+.dhero .em{font-size:58px;line-height:1;}
+.dhero .ch{font-size:12px;font-weight:600;opacity:.92;margin-top:7px;}
+.dhero .an{font-size:24px;font-weight:900;margin-top:1px;}
+.dhero .gb{display:inline-block;margin-top:9px;font-size:11px;font-weight:700;background:rgba(255,255,255,.25);padding:3px 13px;border-radius:20px;}
+.dhero .bd{font-size:10px;opacity:.78;margin-top:8px;}
+.tabs{display:flex;background:#fff;border-bottom:1px solid #e5e5ea;flex-shrink:0;}
+.tab{flex:1;padding:12px;text-align:center;font-size:13px;font-weight:700;color:#8e8e93;border:none;background:none;border-bottom:2px solid transparent;cursor:pointer;}
+.tab.active{color:var(--ind);border-bottom-color:var(--ind);}
+.irow{margin-bottom:11px;}
+.ilabel{font-size:11px;font-weight:700;color:#8e8e93;margin-bottom:3px;}
+.ival{font-size:13px;color:#1c1c1e;line-height:1.65;white-space:pre-line;}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:3px;}
+.chip{font-size:11.5px;padding:4px 9px;border-radius:18px;line-height:1.4;}
+.chip.g{background:#ECFDF5;color:#065F46;}.chip.b{background:#FEF2F2;color:#991B1B;}
+.box{border-radius:11px;padding:12px;margin-bottom:9px;}
+.box .bl{font-size:11px;font-weight:700;margin-bottom:5px;}
+.box .bv{font-size:12.5px;line-height:1.65;white-space:pre-line;color:#1c1c1e;}
+.del-btn{width:100%;background:#fff;color:#EF4444;border:1px solid #FECACA;border-radius:11px;padding:12px;font-size:13px;font-weight:600;cursor:pointer;margin-top:4px;}
+
+/* nav */
+.nav{display:flex;background:#fff;border-top:1px solid #e5e5ea;padding:7px 0;padding-bottom:max(7px,env(safe-area-inset-bottom));flex-shrink:0;}
+.nitem{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;border:none;background:none;cursor:pointer;padding:3px 0;}
+.nicon{font-size:21px;}
+.nlabel{font-size:9.5px;font-weight:600;color:#8e8e93;}
+.nitem.active .nlabel{color:var(--ind);}
+
+/* compat */
+.pick-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
+.pick{background:#fff;border:2px solid #e9e9ee;border-radius:11px;padding:8px 2px;text-align:center;cursor:pointer;transition:.12s;}
+.pick.sel{border-color:var(--ind);background:#EEF2FF;}
+.pick .pe{font-size:24px;display:block;}
+.pick .pn{font-size:10px;font-weight:700;color:#1c1c1e;margin-top:1px;}
+.score-big{font-size:52px;font-weight:900;text-align:center;margin:4px 0;}
+.score-lbl{text-align:center;font-size:13px;font-weight:700;color:#8e8e93;margin-bottom:4px;}
+.citem{margin-bottom:10px;}.chead{font-size:11px;font-weight:700;color:#8e8e93;margin-bottom:3px;text-transform:uppercase;letter-spacing:.3px;}.cbody{font-size:12.5px;color:#1c1c1e;line-height:1.65;}
+
+/* org */
+.dist{margin-bottom:9px;}
+.dist-top{display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;}
+.dist-bar{background:#F3F4F6;border-radius:20px;height:9px;overflow:hidden;}
+.dist-fill{height:100%;border-radius:20px;transition:width .5s;}
+
+/* position */
+.pos-card{background:#fff;border-radius:14px;padding:14px;margin-bottom:11px;box-shadow:0 1px 3px rgba(0,0,0,.06);}
+.pos-name{font-size:14px;font-weight:800;color:#1c1c1e;margin-bottom:2px;}
+.pos-desc{font-size:11px;color:#8e8e93;margin-bottom:9px;}
+.pos-tier{display:flex;align-items:flex-start;gap:7px;margin-bottom:6px;}
+.pos-tag{font-size:10px;font-weight:800;padding:3px 7px;border-radius:6px;flex-shrink:0;width:42px;text-align:center;}
+.pt-best{background:#DCFCE7;color:#15803D;}.pt-ok{background:#FEF9C3;color:#A16207;}.pt-no{background:#FEE2E2;color:#B91C1C;}
+.pos-animals{font-size:13px;line-height:1.55;}
+
+/* sheet (add staff) */
+.sheet-bg{position:absolute;inset:0;background:rgba(0,0,0,.4);opacity:0;pointer-events:none;transition:.25s;z-index:50;}
+.sheet-bg.show{opacity:1;pointer-events:auto;}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:22px 22px 0 0;padding:20px 18px;padding-bottom:max(20px,env(safe-area-inset-bottom));transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);z-index:51;}
+.sheet.show{transform:translateY(0);}
+.sheet h2{font-size:17px;font-weight:800;color:#1c1c1e;margin-bottom:16px;}
+.field{margin-bottom:13px;}
+.field label{font-size:11px;color:#8e8e93;font-weight:700;display:block;margin-bottom:5px;}
+.field input{width:100%;border:2px solid #e5e5ea;border-radius:10px;padding:11px;font-size:16px;font-weight:600;color:#1c1c1e;outline:none;}
+.field input:focus{border-color:var(--ind);}
+.date3{display:flex;gap:8px;align-items:flex-end;}
+.date3 .field{flex:1;margin-bottom:0;}
+.date3 input{text-align:center;}
+.date3 span{font-size:12px;color:#8e8e93;font-weight:600;padding-bottom:12px;}
+.preview{background:#F5F3FF;border-radius:11px;padding:12px;margin:14px 0;display:flex;align-items:center;gap:11px;min-height:60px;}
+.preview .pem{font-size:34px;}
+.preview .pinfo{flex:1;}
+.preview .pan{font-size:16px;font-weight:800;color:#1c1c1e;}
+.preview .pch{font-size:11px;color:#8e8e93;}
+.preview .ph{font-size:12px;color:#8e8e93;}
+.sheet-save{width:100%;background:linear-gradient(135deg,var(--ind),var(--ind2));color:#fff;border:none;padding:14px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 6px 18px rgba(79,70,229,.3);}
+.sheet-save:disabled{opacity:.4;box-shadow:none;}
+.sheet-cancel{width:100%;background:none;color:#8e8e93;border:none;padding:12px;font-size:14px;font-weight:600;cursor:pointer;margin-top:4px;}
+
+.note{font-size:10.5px;color:#8e8e93;text-align:center;padding:10px 14px 20px;line-height:1.6;}
+.disclaimer{background:#FFFBEB;border:1px solid #FDE68A;border-radius:11px;padding:11px 13px;font-size:11px;color:#92400E;line-height:1.6;margin-bottom:11px;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- HOME -->
+  <div class="scr active" id="s-home">
+    <div class="hdr">
+      <div style="flex:1"><div class="logo">ANIMATCH</div><div class="sub" id="home-sub">動物タイプ組織サポート</div></div>
+      <button class="act" onclick="resetData()">⟳ サンプル</button>
+    </div>
+    <div class="scroll">
+      <div class="disclaimer">この結果は動物占いをもとにした<b>コミュニケーション支援</b>です。人事評価・採用選考の判断には使わないでください。データは端末内にのみ保存され、外部に送信されません。</div>
+      <button class="add-btn" onclick="openSheet()">＋ スタッフを追加</button>
+      <div class="card" style="padding:8px 14px"><div class="ctitle">スタッフ一覧（タップでカルテ）</div><div id="staff-list"></div></div>
+      <div class="note">生年月日を入力すると、動物占いの正式ロジックでタイプを自動判定します。</div>
+    </div>
+    <div class="nav" id="nav-home"></div>
+  </div>
+
+  <!-- DETAIL -->
+  <div class="scr" id="s-detail">
+    <div class="hdr"><button class="back" onclick="go('s-home')">‹ 戻る</button><h1 id="d-name"></h1></div>
+    <div id="d-hero" class="dhero"></div>
+    <div class="tabs"><button class="tab active" id="t-k" onclick="dtab('k')">個人カルテ</button><button class="tab" id="t-a" onclick="dtab('a')">管理者 攻略カード</button></div>
+    <div class="scroll" id="d-karte"></div>
+    <div class="scroll" id="d-attack" style="display:none"></div>
+  </div>
+
+  <!-- COMPAT -->
+  <div class="scr" id="s-compat">
+    <div class="hdr"><div><div class="logo" style="font-size:16px">相性診断</div><div class="sub">2タイプの組み合わせを自動分析</div></div></div>
+    <div class="scroll">
+      <div class="card"><div class="ctitle">① 1人目のタイプ</div><div class="pick-grid" id="pickA"></div></div>
+      <div class="card"><div class="ctitle">② 2人目のタイプ</div><div class="pick-grid" id="pickB"></div></div>
+      <div id="compat-out"></div>
+    </div>
+    <div class="nav" id="nav-compat"></div>
+  </div>
+
+  <!-- ORG -->
+  <div class="scr" id="s-org">
+    <div class="hdr"><div><div class="logo" style="font-size:16px">組織分析</div><div class="sub">在籍スタッフから自動算出</div></div></div>
+    <div class="scroll" id="org-body"></div>
+    <div class="nav" id="nav-org"></div>
+  </div>
+
+  <!-- POSITION -->
+  <div class="scr" id="s-pos">
+    <div class="hdr"><div><div class="logo" style="font-size:16px">ポジション適性</div><div class="sub">サービス業の配置ヒント</div></div></div>
+    <div class="scroll" id="pos-body"></div>
+    <div class="nav" id="nav-pos"></div>
+  </div>
+
+  <!-- ADD SHEET -->
+  <div class="sheet-bg" id="sheet-bg" onclick="closeSheet()"></div>
+  <div class="sheet" id="sheet">
+    <h2>スタッフを追加</h2>
+    <div class="field"><label>名前</label><input id="f-name" placeholder="例：山田 花子" oninput="updatePreview()"></div>
+    <div class="field"><label>役割（任意）</label><input id="f-role" placeholder="例：仲居 / フロント" oninput="updatePreview()"></div>
+    <label style="font-size:11px;color:#8e8e93;font-weight:700;display:block;margin-bottom:5px;">生年月日</label>
+    <div class="date3">
+      <div class="field"><input id="f-y" type="number" inputmode="numeric" placeholder="1990" oninput="updatePreview()"></div><span>年</span>
+      <div class="field"><input id="f-m" type="number" inputmode="numeric" placeholder="4" oninput="updatePreview()"></div><span>月</span>
+      <div class="field"><input id="f-d" type="number" inputmode="numeric" placeholder="15" oninput="updatePreview()"></div><span>日</span>
+    </div>
+    <div class="preview" id="preview"><div class="ph">↑ 生年月日を入れると動物タイプが表示されます</div></div>
+    <button class="sheet-save" id="save-btn" onclick="saveStaff()" disabled>保存する</button>
+    <button class="sheet-cancel" onclick="closeSheet()">キャンセル</button>
+  </div>
+
+</div>
+
+<script>
+/* ═══════════════ 検証済み判定エンジン ═══════════════ */
+/* 運命数 = (エクセル日付シリアル + 8) mod 60 + 1
+   検証: 1995/2/12→11→正直なこじか, 2000/1/1→55→パワフルな虎 */
+const CHARS=[null,["長距離ランナーのチータ","チータ"],["社交家のたぬき","たぬき"],["落ち着きのない猿","猿"],["フットワークの軽い子守熊","子守熊"],["面倒見のいい黒ひょう","黒ひょう"],["愛情あふれる虎","虎"],["全力疾走するチータ","チータ"],["磨き上げられたたぬき","たぬき"],["大きな志をもった猿","猿"],["母性豊かな子守熊","子守熊"],["正直なこじか","こじか"],["人気者のゾウ","ゾウ"],["ネアカの狼","狼"],["協調性のないひつじ","ひつじ"],["どっしりとした猿","猿"],["コアラのなかの子守熊","子守熊"],["強い意志をもったこじか","こじか"],["デリケートなゾウ","ゾウ"],["放浪の狼","狼"],["物静かなひつじ","ひつじ"],["落ち着きのあるペガサス","ペガサス"],["強靭な翼をもつペガサス","ペガサス"],["無邪気なひつじ","ひつじ"],["クリエイティブな狼","狼"],["穏やかな狼","狼"],["粘り強いひつじ","ひつじ"],["波乱に満ちたペガサス","ペガサス"],["優雅なペガサス","ペガサス"],["チャレンジ精神旺盛なひつじ","ひつじ"],["順応性のある狼","狼"],["リーダーとなるゾウ","ゾウ"],["しっかり者のこじか","こじか"],["活動的な子守熊","子守熊"],["気分屋の猿","猿"],["頼られると嬉しいひつじ","ひつじ"],["好感のもたれる狼","狼"],["まっしぐらに突き進むゾウ","ゾウ"],["華やかなこじか","こじか"],["夢とロマンの子守熊","子守熊"],["尽す猿","猿"],["大器晩成のたぬき","たぬき"],["足腰の強いチータ","チータ"],["動きまわる虎","虎"],["情熱的な黒ひょう","黒ひょう"],["サービス精神旺盛な子守熊","子守熊"],["守りの猿","猿"],["人間味あふれるたぬき","たぬき"],["品格のあるチータ","チータ"],["ゆったりとした悠然の虎","虎"],["落ち込みの激しい黒ひょう","黒ひょう"],["我が道を行くライオン","ライオン"],["統率力のあるライオン","ライオン"],["感情豊かな黒ひょう","黒ひょう"],["楽天的な虎","虎"],["パワフルな虎","虎"],["気どらない黒ひょう","黒ひょう"],["感情的なライオン","ライオン"],["傷つきやすいライオン","ライオン"],["束縛を嫌う黒ひょう","黒ひょう"],["慈悲深い虎","虎"]];
+function unmei(y,m,d){const r=Math.round((Date.UTC(y,m-1,d)-Date.UTC(1900,0,1))/86400000)+2;return ((r+8)%60)+1;}
+function animalOf(y,m,d){return CHARS[unmei(y,m,d)];}
+
+/* ═══ グループ・絵文字 ═══ */
+const GROUP={"こじか":"MOON","黒ひょう":"MOON","ひつじ":"MOON","たぬき":"MOON","狼":"EARTH","猿":"EARTH","虎":"EARTH","子守熊":"EARTH","チータ":"SUN","ライオン":"SUN","ゾウ":"SUN","ペガサス":"SUN"};
+const GMETA={MOON:{bg:"linear-gradient(135deg,#7C3AED,#6D28D9)",label:"MOON（人間関係重視）",value:"人との和を大切にする",weak:"対立を避けて本音が出にくい",axis:"和と気持ち"},EARTH:{bg:"linear-gradient(135deg,#2563EB,#1D4ED8)",label:"EARTH（現実主義）",value:"現実的に成果を積む",weak:"こだわりが強くぶつかりやすい",axis:"成果と現実"},SUN:{bg:"linear-gradient(135deg,#F59E0B,#D97706)",label:"SUN（感性重視）",value:"感性と可能性を大切にする",weak:"気分や勢いにムラが出る",axis:"感性と自由"}};
+const BEATS={MOON:"EARTH",EARTH:"SUN",SUN:"MOON"};
+const EMOJI={"チータ":"🐆","たぬき":"🦝","猿":"🐒","子守熊":"🐨","黒ひょう":"🐈‍⬛","虎":"🐯","こじか":"🦌","ゾウ":"🐘","狼":"🐺","ひつじ":"🐑","ペガサス":"🦄","ライオン":"🦁"};
+function gbg(g){return g==="MOON"?"#EDE9FE":g==="EARTH"?"#DBEAFE":"#FEF3C7";}
+
+/* ═══ 12動物データ ═══ */
+const P={
+"狼":{c:"マイペースを貫く一匹狼。独自の世界を持つ職人",core:"独自性・こだわり・自分のペース",str:["周りに流されない芯の強さ","独自の視点とこだわり","邪魔されなければ高品質"],wk:["干渉されると一気に失速","協調・雑談が苦手","天邪鬼な一面"],stress:"返事が素っ気なくなる / 単独行動が増える",up:"「あなたのやり方でいい」\n「その視点は他にない」",down:"「みんなと同じように」\n「なんでそうするの」",homeru:"人と違うこだわりを具体的に。\n「その発想は他にない」",shikaru:"1対1で・理由を添えて。\n頭ごなし・人前は厳禁",shiji:"任せて口を出さない。\n「やり方は任せる、結果だけ教えて」",ikusei:"干渉せず見守る。\n本人のこだわりが活きる役割を",mng:"「もっと周りに合わせて」\n「普通はこうする」"},
+"こじか":{c:"純粋で誠実。警戒心は強いが懐くと甘え上手",core:"誠実・安心・純粋",str:["嘘がなく顧客に信頼される","任されると手を抜かない","素直に吸収する伸びしろ"],wk:["慣れるまで時間がかかる","傷つきやすく引きずる","急な変化に弱い"],stress:"元気がないのに「大丈夫」 / 口数が減る",up:"「ゆっくりでいいよ」\n「いてくれて助かる」",down:"急かす言葉 / 大勢の前での叱責\n「なんでできないの」",homeru:"1対1で穏やかに。\n努力の過程を認める",shikaru:"否定せず提案形式・必ずフォロー。\n強い口調はNG",shiji:"丁寧に・理由とともに。\n安心させてから渡す",ikusei:"時間をかけて信頼を築く。\n小さな成功体験を積ませる",mng:"「気にしすぎ」「もっと早く」"},
+"猿":{c:"明るく要領のいい頑張り屋。おだてられると無限に伸びる",core:"達成・承認・目先の目標",str:["要領よく何でもこなす","短期目標で猛烈に動く","明るくムードを作る"],wk:["飽きっぽい","おだてに弱く調子に乗る","長期戦・地味な作業が苦手"],stress:"急にテンションが下がる / 愚痴が増える",up:"「さすが！」「君ならできる」\n「一番だね」",down:"「○○さんの方が上手」\n「まだ終わってないの」",homeru:"すぐ・大げさに・人前で。\n即時の承認が効く",shikaru:"短く・後を引かせない。\nすぐ褒めて立て直す",shiji:"短期ゴールとゲーム感覚で。\n「今日中にここまで！」",ikusei:"こまめな目標と即フィードバック。\n競争心を活用",mng:"「もっと落ち着いて」\n「飽きっぽいね」"},
+"チータ":{c:"誰より速く動く瞬発力。一発逆転を狙う挑戦者",core:"スピード・挑戦・成功",str:["行動が速い","失敗を引きずらない","変化に強く新しいこと好き"],wk:["飽きやすい","詰めが甘い","単調な継続作業が苦手"],stress:"やる気が見えなくなる / 雑さや遅刻が増える",up:"「最初にやってみて」\n「新しいこと任せたい」",down:"「慎重に」「同じやり方で」\n「確認してから」",homeru:"スピードと挑戦を・人前で",shikaru:"1対1・短く事実のみ。\nすぐ期待を添える",shiji:"楽しい挑戦として渡す。\n締切は短く設定",ikusei:"新規業務・変化のある役割を回す。\nマンネリ厳禁",mng:"「報告が遅い」「もっと丁寧に」"},
+"黒ひょう":{c:"新しもの好きでおしゃれ。面倒見がよく後輩に慕われる",core:"新しさ・洗練・面子",str:["流行・情報に敏感","後輩の面倒見がいい","印象づくりが上手"],wk:["プライドが高く打たれ弱い","おだてに弱い","批判で一気に落ち込む"],stress:"急に口数が減る / 距離を置く",up:"「さすがセンスいい」\n「あなたに任せたい」",down:"人前での指摘 / 「古いね」\nプライドを潰す言葉",homeru:"センス・面倒見を人前で。\n立ててあげる",shikaru:"1対1で・面子を潰さず・穏やかに",shiji:"「あなたにお願いしたい」と\n特別感を出す",ikusei:"後輩指導を任せる。\n新しい役割で承認欲求を満たす",mng:"「落ち込みやすいね」\n「もっと図太く」"},
+"ライオン":{c:"堂々としたナンバーワン志向。頼られると燃えるリーダー",core:"影響力・承認・完璧さ",str:["混乱時に冷静に統率","責任感が仕事の質を高める","目標へチームを牽引"],wk:["プライドが高く弱みを見せない","任せられない","細かい管理が苦手"],stress:"口数が減る / 細かいことに突っかかる",up:"「あなたに任せます」\n「さすがです」",down:"人前での叱責 / 「みんなに合わせて」\n「なんで相談しなかった」",homeru:"成果と名前をセットで。\n立場を立てる",shikaru:"必ず1対1・成果ベース。\n人前は致命的",shiji:"裁量を渡して目標だけ。\nプロセスは任せる",ikusei:"責任あるポジションを与える。\nナンバーワンを意識させる",mng:"「プロセスを細かく報告して」\n「もっと謙虚に」"},
+"虎":{c:"バランス感覚に優れた親分肌。慕われるチームの柱",core:"信頼・公正・包容力",str:["面倒見がよく慕われる","バランス感覚と慎重さ","長期の信頼を築く"],wk:["急かされると力が出ない","縄張り意識が強い","慎重すぎて決断が遅い"],stress:"不機嫌を隠さない / 頑固になる",up:"「頼りにしてます」\n「あなたのチームなら安心」",down:"「早くして」/ メンツを潰す\n縄張りを荒らす",homeru:"包容力・信頼性を・落ち着いて",shikaru:"筋を通して・敬意を持って・1対1",shiji:"余裕を持った期限で・任せる形で",ikusei:"後輩の面倒を任せる。\n中堅のまとめ役に",mng:"「もっと早く決めて」\n「細かいことまで口出し」"},
+"たぬき":{c:"人当たりがよく愛嬌たっぷり。経験を積むほど味が出る",core:"経験・調和・信頼",str:["誰とでも丸く付き合う","場の調整・根回しが得意","古株の安定感"],wk:["変化を後回しにする","本音を出さない","新しいことに腰が重い"],stress:"ぼやきが増える / 動きが鈍る",up:"「経験を聞かせて」\n「頼りにしてます」",down:"「古い」/ 急な変化の強制\n本音を急に迫る",homeru:"経験・人柄を・敬意を込めて",shikaru:"経験を立てつつ・変化は理由とともに",shiji:"「これまでのやり方も活かして」と前置き",ikusei:"ベテランの知恵を若手に橋渡しする役を",mng:"「考えが古い」「もっと変わって」"},
+"子守熊":{c:"マイペースで長期戦に強い。じっくり積み上げるオンリーワン",core:"安心・見通し・持久力",str:["長期業務で粘れる","見通しがあると安定","聞き上手な相談役"],wk:["急な変更に弱い","腰が重い","ストレスを溜め込む"],stress:"無口になる / 動きが遅くなる / 疲れを隠す",up:"「準備してから進もう」\n「あなたのペースでいい」",down:"「急にお願い」「早く」\n「休んでる暇ない」",homeru:"着実さ・粘り強さを・じっくり",shikaru:"余裕を持って・追い詰めず・穏やかに",shiji:"早めに予告・見通しを示してから",ikusei:"長期プロジェクトを任せる。\n準備期間を確保",mng:"「のんびりすぎ」「もっとスピード」"},
+"ゾウ":{c:"努力家で専門性の塊。まっすぐ突き進む頑固なプロ",core:"誠実・専門性・忍耐",str:["言ったことは必ずやる","専門性を極める","困難ほど粘る"],wk:["頑固で融通が利かない","完成度優先で時間がかかる","認められないと燃え尽きる"],stress:"無言で抱え込む / 頑なになる",up:"「さすがプロ」\n「あなたほど真剣な人はいない」",down:"「適当でいい」「効率優先で」\n「そんなに丁寧に」",homeru:"専門性・努力を・プロとして",shikaru:"論理的に・敬意を持って。\n完成度を認めた上で",shiji:"任せて専門性を活かす。\n意義を伝える",ikusei:"専門領域を任せて極めさせる。\n第一人者に育てる",mng:"「こだわりすぎ」\n「もっと手を抜いて」"},
+"ひつじ":{c:"協調性抜群で寂しがり。人の役に立ちたい気配り上手",core:"調和・貢献・つながり",str:["気配りとチームの潤滑油","情報通で顔が広い","人の役に立とうとする"],wk:["NOと言えず抱え込む","寂しがりで孤立に弱い","溜め込んで突然崩れる"],stress:"「大丈夫」が口癖 / 静かになる / 体調を崩す",up:"「あなたのおかげ」\n「いつもありがとう」",down:"「はっきり言って」\n「なんで言わなかった」/ 孤立させる",homeru:"貢献・気配りを・感謝とともに",shikaru:"穏やかに・提案形式。\n見捨てないと示す",shiji:"「みんなのために」と意義を。\n無理させない",ikusei:"チームの調整役を任せる。\n孤立させない",mng:"「気にしすぎ」「もっと強く」"},
+"ペガサス":{c:"直感と自由が武器の天才肌。ほめられて伸びる気まぐれ屋",core:"自由・直感・可能性",str:["既成概念にとらわれない発想","乗ると爆発的な成果","スケールが大きい"],wk:["気分にムラがある","束縛・ルールが苦手","コツコツが続かない"],stress:"ムラが激しくなる / 急に投げ出す",up:"「自由にやって」「面白いね」",down:"「マニュアル通りに」\n「なんで勝手に」/ 束縛",homeru:"直感・スケールを・とにかくほめる",shikaru:"理詰めより感覚で・短く。\n引きずらせない",shiji:"枠を与えず方向だけ。\n自由度を残す",ikusei:"裁量の大きい役割を。\nルールで縛らない",mng:"「気分屋だね」「ちゃんと続けて」"}
+};
+const ALL12=["ライオン","チータ","ゾウ","ペガサス","狼","猿","虎","子守熊","黒ひょう","ひつじ","こじか","たぬき"];
+
+/* ═══ ポジション適性 ═══ */
+const POS=[
+ {n:"フロント・受付",d:"第一印象・笑顔・即対応",best:["チータ","猿","ひつじ","黒ひょう"],ok:["こじか","たぬき","ライオン"],no:["狼","ゾウ","子守熊"]},
+ {n:"接客・仲居",d:"おもてなし・気配り・継続関係",best:["ひつじ","こじか","たぬき","猿"],ok:["黒ひょう","虎","チータ"],no:["狼","ゾウ"]},
+ {n:"調理・厨房",d:"技術・品質・集中",best:["狼","ゾウ","子守熊"],ok:["虎","ライオン"],no:["猿","チータ","ペガサス"]},
+ {n:"清掃・客室整備",d:"丁寧・確実・単独作業",best:["子守熊","こじか","狼","ひつじ"],ok:["たぬき","ゾウ"],no:["ライオン","チータ","黒ひょう"]},
+ {n:"営繕・設備",d:"技術・段取り・安定",best:["狼","ゾウ","子守熊"],ok:["虎"],no:["猿","チータ","ペガサス"]},
+ {n:"管理職・リーダー",d:"統率・判断・育成",best:["ライオン","虎","ゾウ"],ok:["黒ひょう","狼"],no:["こじか","ひつじ","ペガサス"]},
+];
+
+/* ═══ データ保存（localStorage）═══ */
+const KEY='animatch_staff_v1';
+const SAMPLE=[
+ {name:"佐藤 健",role:"フロント主任",y:1979,m:11,d:3},
+ {name:"田中 恵",role:"接客スタッフ",y:1988,m:7,d:25},
+ {name:"鈴木 美咲",role:"仲居",y:1995,m:2,d:12},
+ {name:"山田 洋介",role:"料理長",y:1973,m:12,d:15},
+ {name:"中村 由美",role:"客室清掃",y:1992,m:9,d:18},
+ {name:"小林 大輔",role:"営繕",y:2000,m:1,d:1},
+ {name:"加藤 さくら",role:"接客スタッフ",y:1998,m:6,d:30},
+ {name:"渡辺 翔",role:"調理",y:2001,m:3,d:22},
+];
+let STAFF=[];
+function enrich(s){const[ch,an]=animalOf(s.y,s.m,s.d);return{...s,chara:ch,animal:an,group:GROUP[an]};}
+function load(){let raw;try{raw=JSON.parse(localStorage.getItem(KEY));}catch(e){}STAFF=(raw&&raw.length?raw:SAMPLE).map(enrich);}
+function save(){localStorage.setItem(KEY,JSON.stringify(STAFF.map(s=>({name:s.name,role:s.role,y:s.y,m:s.m,d:s.d}))));}
+function resetData(){if(confirm("サンプルスタッフに戻します。追加したスタッフは消えますがよろしいですか？")){STAFF=SAMPLE.map(enrich);save();buildStaff();}}
+
+/* ═══ 描画 ═══ */
+function buildStaff(){
+ document.getElementById('home-sub').textContent=`山しのぶ旅館 · ${STAFF.length}名登録`;
+ const el=document.getElementById('staff-list');
+ if(!STAFF.length){el.innerHTML=`<div class="empty">まだスタッフがいません。<br>上の「＋ スタッフを追加」から登録してください。</div>`;return;}
+ el.innerHTML=STAFF.map((s,i)=>`<div class="srow" onclick="detail(${i})"><div class="semoji" style="background:${gbg(s.group)}">${EMOJI[s.animal]}</div><div class="sinfo"><div class="sname">${esc(s.name)}</div><div class="ssub">${esc(s.role||'')}${s.role?' · ':''}${s.animal}型 <span class="gbadge g-${s.group}">${s.group}</span></div></div><span class="chev">›</span></div>`).join('');
+}
+function esc(t){return(t||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+let curStaff=0,curTab='k';
+function detail(i){curStaff=i;const s=STAFF[i],p=P[s.animal],gm=GMETA[s.group];
+ document.getElementById('d-name').textContent=s.name;
+ document.getElementById('d-hero').style.background=gm.bg;
+ document.getElementById('d-hero').innerHTML=`<div class="em">${EMOJI[s.animal]}</div><div class="ch">${s.chara}</div><div class="an">${s.animal}型</div><div class="gb">${gm.label}</div><div class="bd">${s.y}年${s.m}月${s.d}日生まれ · 運命数${unmei(s.y,s.m,s.d)}</div>`;
+ document.getElementById('d-karte').innerHTML=`
+  <div class="card"><div class="irow"><div class="ilabel">この人を一言で</div><div class="ival">${p.c}</div></div><div class="irow"><div class="ilabel">コアバリュー</div><div class="ival">${p.core}</div></div></div>
+  <div class="card"><div class="irow"><div class="ilabel">強み</div><div class="chips">${p.str.map(x=>`<span class="chip g">✅ ${x}</span>`).join('')}</div></div><div class="irow"><div class="ilabel">弱み（折れ点）</div><div class="chips">${p.wk.map(x=>`<span class="chip b">⚠ ${x}</span>`).join('')}</div></div></div>
+  <div class="card"><div class="irow"><div class="ilabel">⚡ ストレスサイン</div><div class="ival">${p.stress}</div></div><div class="irow"><div class="ilabel">🔥 やる気が出る言葉</div><div class="ival" style="color:#4F46E5">${p.up}</div></div><div class="irow"><div class="ilabel">🚫 やる気を失う言葉</div><div class="ival" style="color:#EF4444">${p.down}</div></div></div>
+  <button class="del-btn" onclick="delStaff(${i})">このスタッフを削除</button>`;
+ document.getElementById('d-attack').innerHTML=`
+  <div class="card">
+   <div class="box" style="background:#ECFDF5"><div class="bl" style="color:#065F46">👍 褒め方</div><div class="bv">${p.homeru}</div></div>
+   <div class="box" style="background:#FEF2F2"><div class="bl" style="color:#991B1B">⚡ 叱り方</div><div class="bv">${p.shikaru}</div></div>
+   <div class="box" style="background:#EFF6FF"><div class="bl" style="color:#1D4ED8">📋 指示の出し方</div><div class="bv">${p.shiji}</div></div>
+   <div class="box" style="background:#F5F3FF"><div class="bl" style="color:#6D28D9">🌱 育成方法</div><div class="bv">${p.ikusei}</div></div>
+   <div class="box" style="background:#FFF7ED"><div class="bl" style="color:#9A3412">🚫 面談NGワード</div><div class="bv">${p.mng}</div></div>
+  </div>`;
+ dtab('k');go('s-detail');
+}
+function dtab(t){curTab=t;document.getElementById('d-karte').style.display=t==='k'?'block':'none';document.getElementById('d-attack').style.display=t==='a'?'block':'none';document.getElementById('t-k').className='tab'+(t==='k'?' active':'');document.getElementById('t-a').className='tab'+(t==='a'?' active':'');}
+function delStaff(i){if(confirm(`${STAFF[i].name} さんを削除しますか？`)){STAFF.splice(i,1);save();buildStaff();go('s-home');}}
+
+/* ═══ スタッフ追加シート ═══ */
+function openSheet(){document.getElementById('f-name').value='';document.getElementById('f-role').value='';document.getElementById('f-y').value='';document.getElementById('f-m').value='';document.getElementById('f-d').value='';updatePreview();document.getElementById('sheet-bg').classList.add('show');document.getElementById('sheet').classList.add('show');}
+function closeSheet(){document.getElementById('sheet-bg').classList.remove('show');document.getElementById('sheet').classList.remove('show');}
+function readForm(){const y=+document.getElementById('f-y').value,m=+document.getElementById('f-m').value,d=+document.getElementById('f-d').value,name=document.getElementById('f-name').value.trim();const valid=name&&y>1900&&y<2100&&m>=1&&m<=12&&d>=1&&d<=31;return{y,m,d,name,valid};}
+function updatePreview(){const f=readForm();const pv=document.getElementById('preview');const btn=document.getElementById('save-btn');
+ if(f.y>1900&&f.y<2100&&f.m>=1&&f.m<=12&&f.d>=1&&f.d<=31){const[ch,an]=animalOf(f.y,f.m,f.d);const g=GROUP[an];pv.innerHTML=`<div class="pem">${EMOJI[an]}</div><div class="pinfo"><div class="pan">${an}型 <span class="gbadge g-${g}" style="vertical-align:middle">${g}</span></div><div class="pch">${ch}</div></div>`;}
+ else{pv.innerHTML=`<div class="ph">↑ 生年月日を入れると動物タイプが表示されます</div>`;}
+ btn.disabled=!f.valid;
+}
+function saveStaff(){const f=readForm();if(!f.valid)return;STAFF.push(enrich({name:f.name,role:document.getElementById('f-role').value.trim(),y:f.y,m:f.m,d:f.d}));save();buildStaff();closeSheet();}
+
+/* ═══ 相性 ═══ */
+let selA="ライオン",selB="ひつじ";
+function buildPicks(){
+ document.getElementById('pickA').innerHTML=ALL12.map(a=>`<div class="pick${selA===a?' sel':''}" onclick="setPick('A','${a}')"><span class="pe">${EMOJI[a]}</span><span class="pn">${a}</span></div>`).join('');
+ document.getElementById('pickB').innerHTML=ALL12.map(a=>`<div class="pick${selB===a?' sel':''}" onclick="setPick('B','${a}')"><span class="pe">${EMOJI[a]}</span><span class="pn">${a}</span></div>`).join('');
+}
+function setPick(s,a){if(s==='A')selA=a;else selB=a;buildPicks();calcCompat();}
+function calcCompat(){
+ const a=selA,b=selB,ga=GROUP[a],gb=GROUP[b];let score,label,good,clash,advice;
+ if(a===b){score=70;label="鏡うつし";good=`同じ${a}型どうし。価値観が同じで説明不要のツーカー。`;clash="弱みも同じ。二人とも同じ場面でつまずき、短所が増幅する。";advice="役割を少しずらし、片方が苦手を補う配置を意識する。";}
+ else if(ga===gb){score=76;label="同グループ";good=`同じ${ga}グループ。「${GMETA[ga].value}」という土台が同じで安心して組める。`;clash=`似た者どうしゆえ、${ga}共通の弱点（${GMETA[ga].weak}）が両方に出やすい。`;advice="違うグループのメンバーを一人混ぜると視点が補える。";}
+ else{const aWins=BEATS[ga]===gb;const W=aWins?a:b,L=aWins?b:a,gW=aWins?ga:gb,gL=aWins?gb:ga;
+  score=66;label="じゃんけん関係";
+  good=`${W}（${gW}）の伝え方が${L}（${gL}）に届きやすい関係。${W}が引っ張り${L}が支えると噛み合う。`;
+  clash=`優先するものが違う。「${GMETA[ga].axis}」を大切にする${a} と 「${GMETA[gb].axis}」を大切にする${b} でペースがずれる。`;
+  advice=`${W}がリード役、${L}が実務役と役割を明文化すると安定する。`;}
+ document.getElementById('compat-out').innerHTML=`
+  <div class="card" style="text-align:center"><div class="ctitle">相性スコア</div><div class="score-big" style="color:${score>=74?'#10B981':score>=68?'#F59E0B':'#6366F1'}">${score}<span style="font-size:20px">点</span></div><div class="score-lbl">${EMOJI[a]}${a} × ${EMOJI[b]}${b} ・ ${label}</div></div>
+  <div class="card"><div class="citem"><div class="chead">相性の良い点</div><div class="cbody">✅ ${good}</div></div><div class="citem"><div class="chead">衝突しやすいポイント</div><div class="cbody">⚠️ ${clash}</div></div><div class="citem"><div class="chead">関係改善アドバイス</div><div class="cbody">💡 ${advice}</div></div></div>`;
+}
+
+/* ═══ 組織分析 ═══ */
+function buildOrg(){
+ const body=document.getElementById('org-body');
+ if(!STAFF.length){body.innerHTML=`<div class="empty">スタッフを登録すると組織分析が表示されます。</div>`;return;}
+ const cnt={MOON:0,EARTH:0,SUN:0},acnt={};STAFF.forEach(s=>{cnt[s.group]++;acnt[s.animal]=(acnt[s.animal]||0)+1;});
+ const tot=STAFF.length;const gcol={MOON:"#7C3AED",EARTH:"#2563EB",SUN:"#F59E0B"};
+ const missing=ALL12.filter(a=>!acnt[a]);
+ const sorted=Object.entries(cnt).sort((x,y)=>y[1]-x[1]);
+ const top=sorted[0],bottom=sorted[2];
+ body.innerHTML=`
+  <div class="card"><div class="ctitle">3グループ分布（${tot}名）</div>${["MOON","EARTH","SUN"].map(g=>`<div class="dist"><div class="dist-top"><span style="font-weight:700;color:${gcol[g]}">${g}</span><span style="color:#8e8e93">${cnt[g]}名</span></div><div class="dist-bar"><div class="dist-fill" style="background:${gcol[g]};width:${cnt[g]/tot*100}%"></div></div></div>`).join('')}<div style="font-size:11px;color:#8e8e93;margin-top:6px">${top[1]===bottom[1]?'バランスよく分散しています。':`${top[0]}が最多・${bottom[0]}が最少。バランスに偏りがあります。`}</div></div>
+  <div class="card"><div class="ctitle" style="color:#D97706">⚡ 組織の強み</div><div class="ival">${top[0]}グループが厚い＝${GMETA[top[0]].value}文化が根づいています。この強みを軸にできます。</div></div>
+  <div class="card"><div class="ctitle" style="color:#EF4444">⚠ 組織の弱み・離職リスク</div><div class="ival">${bottom[0]}グループが手薄＝「${GMETA[bottom[0]].value}」役割が不足。${bottom[0]}型の人は少数ゆえ孤立しやすく、離職リスクが高まります。定期的な声がけを。</div></div>
+  <div class="card"><div class="ctitle" style="color:#4F46E5">📋 不足タイプ（採用で補う）</div>${missing.length?`<div class="chips">${missing.map(a=>`<span class="chip" style="background:#F3F4F6;color:#374151">${EMOJI[a]} ${a}</span>`).join('')}</div><div style="font-size:11px;color:#8e8e93;margin-top:8px">在籍ゼロのタイプ。${bottom[0]}グループから優先的に補うとバランスが整います。</div>`:`<div class="ival">全12タイプが揃っています。理想的な多様性です。</div>`}</div>
+  <div class="card"><div class="ctitle">🤝 強いチーム編成の例</div><div class="ival">接客：ひつじ(気配り)×猿(明るさ)×虎/ライオン(即断)\n調理：狼(技術)×ゾウ(粘り)×子守熊(安定)\n\n衝突注意：ライオン×ライオン（主導権争い）、狼×猿（ペースが逆）→ 間に虎・たぬきを置くと緩和。</div></div>`;
+}
+
+/* ═══ ポジション適性 ═══ */
+function buildPos(){
+ document.getElementById('pos-body').innerHTML=`<div style="font-size:11px;color:#8e8e93;padding:2px 4px 10px;line-height:1.5">各ポジションに向く動物タイプ。傾向であり絶対ではなく、本人の意欲を優先した上での参考に。</div>`+POS.map(p=>`
+  <div class="pos-card"><div class="pos-name">${p.n}</div><div class="pos-desc">${p.d}</div>
+   <div class="pos-tier"><span class="pos-tag pt-best">最適</span><span class="pos-animals">${p.best.map(a=>EMOJI[a]+a).join(' ')}</span></div>
+   <div class="pos-tier"><span class="pos-tag pt-ok">許容</span><span class="pos-animals">${p.ok.map(a=>EMOJI[a]+a).join(' ')}</span></div>
+   <div class="pos-tier"><span class="pos-tag pt-no">注意</span><span class="pos-animals">${p.no.map(a=>EMOJI[a]+a).join(' ')}</span></div>
+  </div>`).join('');
+}
+
+/* ═══ ナビ ═══ */
+const NAV=[["s-home","🏠","ホーム"],["s-compat","💫","相性"],["s-org","📊","組織"],["s-pos","🎯","適性"]];
+function buildNav(){["home","compat","org","pos"].forEach(k=>{const cur="s-"+k;const nav=document.getElementById("nav-"+k);if(nav)nav.innerHTML=NAV.map(([id,ic,lb])=>`<button class="nitem${cur===id?' active':''}" onclick="go('${id}')"><span class="nicon">${ic}</span><span class="nlabel">${lb}</span></button>`).join('');});}
+function go(id){document.querySelectorAll('.scr').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');if(id==='s-compat'){buildPicks();calcCompat();}if(id==='s-org')buildOrg();if(id==='s-pos')buildPos();window.scrollTo&&document.querySelector('#'+id+' .scroll')?.scrollTo(0,0);}
+
+/* ═══ 起動 ═══ */
+load();buildStaff();buildNav();buildPicks();calcCompat();
+</script>
+</body>
+</html>
