@@ -101,7 +101,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic',sa
 /* sheet (add staff) */
 .sheet-bg{position:absolute;inset:0;background:rgba(0,0,0,.4);opacity:0;pointer-events:none;transition:.25s;z-index:50;}
 .sheet-bg.show{opacity:1;pointer-events:auto;}
-.sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:22px 22px 0 0;padding:20px 18px;padding-bottom:max(20px,env(safe-area-inset-bottom));transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);z-index:51;}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:22px 22px 0 0;padding:20px 18px;padding-bottom:max(20px,env(safe-area-inset-bottom));transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);z-index:51;max-height:94%;overflow-y:auto;}
 .sheet.show{transform:translateY(0);}
 .sheet h2{font-size:17px;font-weight:800;color:#1c1c1e;margin-bottom:16px;}
 .field{margin-bottom:13px;}
@@ -124,6 +124,33 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic',sa
 
 .note{font-size:10.5px;color:#8e8e93;text-align:center;padding:10px 14px 20px;line-height:1.6;}
 .disclaimer{background:#FFFBEB;border:1px solid #FDE68A;border-radius:11px;padding:11px 13px;font-size:11px;color:#92400E;line-height:1.6;margin-bottom:11px;}
+
+/* 5アニマル */
+.five-strip{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;margin-bottom:4px;}
+.five-strip::-webkit-scrollbar{display:none;}
+.five-chip{flex:0 0 auto;background:#F8F8FB;border:1px solid #ececf2;border-radius:12px;padding:8px 6px;text-align:center;min-width:62px;}
+.five-chip.honshitsu{background:#F5F3FF;border-color:#ddd6fe;}
+.five-chip .fl{font-size:9px;font-weight:800;color:#8e8e93;}
+.five-chip .fe{font-size:24px;line-height:1.2;}
+.five-chip .fn{font-size:10px;font-weight:700;color:#1c1c1e;}
+.facet-card{border-radius:11px;padding:11px 12px;margin-bottom:8px;background:#fff;border:1px solid #f0f0f3;}
+.facet-card .fh{display:flex;align-items:center;gap:7px;margin-bottom:5px;}
+.facet-card .fbadge{font-size:18px;}
+.facet-card .ft{font-size:13px;font-weight:800;color:#1c1c1e;}
+.facet-card .fsub{font-size:10px;color:#8e8e93;font-weight:600;}
+.facet-card .fbody{font-size:12.5px;color:#1c1c1e;line-height:1.6;}
+.facet-pct{font-size:10px;color:#8e8e93;font-weight:700;margin-left:auto;}
+.cta-card{background:#F5F3FF;border:1px dashed #c4b5fd;border-radius:12px;padding:14px;text-align:center;margin-bottom:11px;}
+.cta-card .ct{font-size:13px;font-weight:700;color:#5b21b6;margin-bottom:5px;}
+.cta-card .cd{font-size:11.5px;color:#6d28d9;line-height:1.6;margin-bottom:10px;}
+.cta-card a{display:inline-block;font-size:12px;font-weight:700;color:var(--ind);text-decoration:none;border:1px solid #c7d2fe;border-radius:8px;padding:7px 12px;margin:0 3px;}
+.cta-card button{font-size:12px;font-weight:700;color:#fff;background:var(--ind);border:none;border-radius:8px;padding:8px 14px;cursor:pointer;margin:3px;}
+.sheet-section{font-size:11px;font-weight:800;color:#8e8e93;margin:16px 0 6px;display:flex;align-items:center;gap:6px;}
+.sheet-section a{font-size:10px;font-weight:700;color:var(--ind);text-decoration:none;margin-left:auto;border:1px solid #c7d2fe;border-radius:6px;padding:3px 7px;}
+.facet-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.facet-sel label{font-size:10px;color:#8e8e93;font-weight:700;display:block;margin-bottom:3px;}
+.facet-sel select{width:100%;border:2px solid #e5e5ea;border-radius:9px;padding:9px 8px;font-size:14px;font-weight:600;color:#1c1c1e;outline:none;background:#fff;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2 4l4 4 4-4' stroke='%238e8e93' stroke-width='1.5' fill='none'/></svg>");background-repeat:no-repeat;background-position:right 8px center;}
+.facet-sel select:focus{border-color:var(--ind);}
 </style>
 </head>
 <body>
@@ -146,7 +173,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic',sa
 
   <!-- DETAIL -->
   <div class="scr" id="s-detail">
-    <div class="hdr"><button class="back" onclick="go('s-home')">‹ 戻る</button><h1 id="d-name"></h1></div>
+    <div class="hdr"><button class="back" onclick="go('s-home')">‹ 戻る</button><h1 id="d-name"></h1><button class="act" onclick="openEdit(curStaff)">編集</button></div>
     <div id="d-hero" class="dhero"></div>
     <div class="tabs"><button class="tab active" id="t-k" onclick="dtab('k')">個人カルテ</button><button class="tab" id="t-a" onclick="dtab('a')">管理者 攻略カード</button></div>
     <div class="scroll" id="d-karte"></div>
@@ -181,17 +208,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic',sa
   <!-- ADD SHEET -->
   <div class="sheet-bg" id="sheet-bg" onclick="closeSheet()"></div>
   <div class="sheet" id="sheet">
-    <h2>スタッフを追加</h2>
+    <h2 id="sheet-title">スタッフを追加</h2>
     <div class="field"><label>名前</label><input id="f-name" placeholder="例：山田 花子" oninput="updatePreview()"></div>
     <div class="field"><label>役割（任意）</label><input id="f-role" placeholder="例：仲居 / フロント" oninput="updatePreview()"></div>
-    <label style="font-size:11px;color:#8e8e93;font-weight:700;display:block;margin-bottom:5px;">生年月日</label>
+    <label style="font-size:11px;color:#8e8e93;font-weight:700;display:block;margin-bottom:5px;">生年月日（→ 本質を自動判定）</label>
     <div class="date3">
       <div class="field"><input id="f-y" type="number" inputmode="numeric" placeholder="1990" oninput="updatePreview()"></div><span>年</span>
       <div class="field"><input id="f-m" type="number" inputmode="numeric" placeholder="4" oninput="updatePreview()"></div><span>月</span>
       <div class="field"><input id="f-d" type="number" inputmode="numeric" placeholder="15" oninput="updatePreview()"></div><span>日</span>
     </div>
-    <div class="preview" id="preview"><div class="ph">↑ 生年月日を入れると動物タイプが表示されます</div></div>
-    <button class="sheet-save" id="save-btn" onclick="saveStaff()" disabled>保存する</button>
+    <div class="preview" id="preview"><div class="ph">↑ 生年月日を入れると本質タイプが表示されます</div></div>
+    <div class="sheet-section">5アニマル（任意・同じ動物でも個別化）<a href="https://www.doubutsu-uranai.com/uranai_chara_5animals.php" target="_blank" rel="noopener">公式で調べる ↗</a></div>
+    <div class="facet-grid" id="facet-grid"></div>
+    <button class="sheet-save" id="save-btn" onclick="saveStaff()" disabled style="margin-top:16px">保存する</button>
     <button class="sheet-cancel" onclick="closeSheet()">キャンセル</button>
   </div>
 
@@ -229,6 +258,16 @@ const P={
 };
 const ALL12=["ライオン","チータ","ゾウ","ペガサス","狼","猿","虎","子守熊","黒ひょう","ひつじ","こじか","たぬき"];
 
+/* ═══ 5アニマル（本質＋表面・意思・希望・隠れ）═══ */
+/* 本質は生年月日から自動。他4つは公式サイトで調べて登録（非公開計算のため推測しない）。*/
+const FE={ "ライオン":"堂々と主導権を握ろうとする","チータ":"勢いよく先に動こうとする","ゾウ":"粘り強くやり切ろうとする","ペガサス":"自由きままに直感で動く","狼":"自分のペースを守ろうとする","猿":"明るく要領よく立ち回る","虎":"どっしり構えて周りに気を配る","子守熊":"のんびりじっくり構える","黒ひょう":"スマートに見せ面倒見よく動く","ひつじ":"周りに合わせて和を保とうとする","こじか":"素直にていねいに人へ尽くす","たぬき":"愛嬌よく角を立てずに立ち回る" };
+const FACETS=[
+ {k:"h", label:"表面", emoji:"🎭", pct:"約30%", sub:"初対面・お客様の前で出る顔", frame:a=>`外では【${a}】の顔が前に出ます。${FE[a]}ので、第一印象は実際より${a}寄りに見えます。本心とのギャップに注意。`},
+ {k:"i", label:"意思", emoji:"🧭", pct:"約15%", sub:"決断・行動のクセ", frame:a=>`何かを決める瞬間は【${a}】が出ます。${FE[a]}ため、判断を促すときは${a}に響く伝え方が効きます。`},
+ {k:"kb",label:"希望", emoji:"⭐", pct:"約5%", sub:"理想・疲れたときの逃げ場", frame:a=>`理想像は【${a}】。迷ったり疲れたときは${a}のように振る舞いたくなります。「${FE[a]}」を満たせる役割や時間が回復になります。`},
+ {k:"kk",label:"隠れ", emoji:"🌑", pct:"裏の顔", sub:"本人も気づきにくい一面", frame:a=>`ふとした時に【${a}】が顔を出します。奥では「${FE[a]}」一面があり、追い込まれた時ほど出やすい。`},
+];
+
 /* ═══ ポジション適性 ═══ */
 const POS=[
  {n:"フロント・受付",d:"第一印象・笑顔・即対応",best:["チータ","猿","ひつじ","黒ひょう"],ok:["こじか","たぬき","ライオン"],no:["狼","ゾウ","子守熊"]},
@@ -242,9 +281,9 @@ const POS=[
 /* ═══ データ保存（localStorage）═══ */
 const KEY='animatch_staff_v1';
 const SAMPLE=[
- {name:"佐藤 健",role:"フロント主任",y:1979,m:11,d:3},
- {name:"田中 恵",role:"接客スタッフ",y:1988,m:7,d:25},
- {name:"鈴木 美咲",role:"仲居",y:1995,m:2,d:12},
+ {name:"佐藤 健",role:"フロント主任",y:1979,m:11,d:3,h:"ライオン",i:"狼",kb:"ゾウ",kk:"チータ"},
+ {name:"田中 恵",role:"接客スタッフ",y:1988,m:7,d:25,h:"猿",i:"虎",kb:"ペガサス",kk:"ひつじ"},
+ {name:"鈴木 美咲",role:"仲居",y:1995,m:2,d:12,h:"ひつじ",i:"こじか",kb:"ペガサス",kk:"たぬき"},
  {name:"山田 洋介",role:"料理長",y:1973,m:12,d:15},
  {name:"中村 由美",role:"客室清掃",y:1992,m:9,d:18},
  {name:"小林 大輔",role:"営繕",y:2000,m:1,d:1},
@@ -254,7 +293,7 @@ const SAMPLE=[
 let STAFF=[];
 function enrich(s){const[ch,an]=animalOf(s.y,s.m,s.d);return{...s,chara:ch,animal:an,group:GROUP[an]};}
 function load(){let raw;try{raw=JSON.parse(localStorage.getItem(KEY));}catch(e){}STAFF=(raw&&raw.length?raw:SAMPLE).map(enrich);}
-function save(){localStorage.setItem(KEY,JSON.stringify(STAFF.map(s=>({name:s.name,role:s.role,y:s.y,m:s.m,d:s.d}))));}
+function save(){localStorage.setItem(KEY,JSON.stringify(STAFF.map(s=>({name:s.name,role:s.role,y:s.y,m:s.m,d:s.d,h:s.h||"",i:s.i||"",kb:s.kb||"",kk:s.kk||""}))));}
 function resetData(){if(confirm("サンプルスタッフに戻します。追加したスタッフは消えますがよろしいですか？")){STAFF=SAMPLE.map(enrich);save();buildStaff();}}
 
 /* ═══ 描画 ═══ */
@@ -272,9 +311,12 @@ function detail(i){curStaff=i;const s=STAFF[i],p=P[s.animal],gm=GMETA[s.group];
  document.getElementById('d-hero').style.background=gm.bg;
  document.getElementById('d-hero').innerHTML=`<div class="em">${EMOJI[s.animal]}</div><div class="ch">${s.chara}</div><div class="an">${s.animal}型</div><div class="gb">${gm.label}</div><div class="bd">${s.y}年${s.m}月${s.d}日生まれ · 運命数${unmei(s.y,s.m,s.d)}</div>`;
  document.getElementById('d-karte').innerHTML=`
+  ${fiveStrip(s)}
+  <div class="ctitle" style="margin:4px 2px 8px">本質 ―― 本当の自分（${s.chara}）</div>
   <div class="card"><div class="irow"><div class="ilabel">この人を一言で</div><div class="ival">${p.c}</div></div><div class="irow"><div class="ilabel">コアバリュー</div><div class="ival">${p.core}</div></div></div>
   <div class="card"><div class="irow"><div class="ilabel">強み</div><div class="chips">${p.str.map(x=>`<span class="chip g">✅ ${x}</span>`).join('')}</div></div><div class="irow"><div class="ilabel">弱み（折れ点）</div><div class="chips">${p.wk.map(x=>`<span class="chip b">⚠ ${x}</span>`).join('')}</div></div></div>
   <div class="card"><div class="irow"><div class="ilabel">⚡ ストレスサイン</div><div class="ival">${p.stress}</div></div><div class="irow"><div class="ilabel">🔥 やる気が出る言葉</div><div class="ival" style="color:#4F46E5">${p.up}</div></div><div class="irow"><div class="ilabel">🚫 やる気を失う言葉</div><div class="ival" style="color:#EF4444">${p.down}</div></div></div>
+  ${fiveAnimalDetail(s)}
   <button class="del-btn" onclick="delStaff(${i})">このスタッフを削除</button>`;
  document.getElementById('d-attack').innerHTML=`
   <div class="card">
@@ -289,16 +331,39 @@ function detail(i){curStaff=i;const s=STAFF[i],p=P[s.animal],gm=GMETA[s.group];
 function dtab(t){curTab=t;document.getElementById('d-karte').style.display=t==='k'?'block':'none';document.getElementById('d-attack').style.display=t==='a'?'block':'none';document.getElementById('t-k').className='tab'+(t==='k'?' active':'');document.getElementById('t-a').className='tab'+(t==='a'?' active':'');}
 function delStaff(i){if(confirm(`${STAFF[i].name} さんを削除しますか？`)){STAFF.splice(i,1);save();buildStaff();go('s-home');}}
 
+/* 5アニマルの帯（本質＋設定済みの顔） */
+function fiveStrip(s){
+ const chips=[`<div class="five-chip honshitsu"><div class="fl">本質</div><div class="fe">${EMOJI[s.animal]}</div><div class="fn">${s.animal}</div></div>`];
+ FACETS.forEach(f=>{ if(s[f.k]) chips.push(`<div class="five-chip"><div class="fl">${f.label}</div><div class="fe">${EMOJI[s[f.k]]}</div><div class="fn">${s[f.k]}</div></div>`); });
+ return `<div class="five-strip">${chips.join('')}</div>`;
+}
+/* 表面・意思・希望・隠れの解説（未設定ならCTA） */
+function fiveAnimalDetail(s){
+ const set=FACETS.filter(f=>s[f.k]);
+ if(!set.length){
+  return `<div class="ctitle" style="margin:14px 2px 8px">5アニマル ―― 同じ動物でも個別化</div>
+   <div class="cta-card"><div class="ct">この人の「表面・意思・希望・隠れ」は未設定です</div><div class="cd">本質以外の4匹は公式の非公開計算です。下のボタンで4匹を調べて登録すると、同じ動物の人とも違う個別カルテになります。</div><a href="https://www.doubutsu-uranai.com/uranai_chara_5animals.php" target="_blank" rel="noopener">公式で調べる ↗</a><button onclick="openEdit(curStaff)">編集して入力</button></div>`;
+ }
+ return `<div class="ctitle" style="margin:14px 2px 8px">5アニマル ―― 本質以外の4つの顔</div>`+
+  set.map(f=>`<div class="facet-card"><div class="fh"><span class="fbadge">${f.emoji}</span><span class="ft">${f.label}：${EMOJI[s[f.k]]} ${s[f.k]}</span><span class="facet-pct">${f.pct}</span></div><div class="fsub">${f.sub}</div><div class="fbody" style="margin-top:5px">${f.frame(s[f.k])}</div></div>`).join('');
+}
+
 /* ═══ スタッフ追加シート ═══ */
-function openSheet(){document.getElementById('f-name').value='';document.getElementById('f-role').value='';document.getElementById('f-y').value='';document.getElementById('f-m').value='';document.getElementById('f-d').value='';updatePreview();document.getElementById('sheet-bg').classList.add('show');document.getElementById('sheet').classList.add('show');}
+let editIndex=null;
+function buildFacetSelects(vals){
+ document.getElementById('facet-grid').innerHTML=FACETS.map(f=>`<div class="facet-sel"><label>${f.emoji} ${f.label}</label><select id="f-${f.k}"><option value="">未設定</option>${ALL12.map(a=>`<option value="${a}"${vals&&vals[f.k]===a?' selected':''}>${EMOJI[a]} ${a}</option>`).join('')}</select></div>`).join('');
+}
+function showSheet(){document.getElementById('sheet-bg').classList.add('show');document.getElementById('sheet').classList.add('show');document.getElementById('sheet').scrollTop=0;}
+function openSheet(){editIndex=null;document.getElementById('sheet-title').textContent='スタッフを追加';['f-name','f-role','f-y','f-m','f-d'].forEach(id=>document.getElementById(id).value='');buildFacetSelects(null);updatePreview();showSheet();}
+function openEdit(i){editIndex=i;const s=STAFF[i];document.getElementById('sheet-title').textContent='スタッフを編集';document.getElementById('f-name').value=s.name;document.getElementById('f-role').value=s.role||'';document.getElementById('f-y').value=s.y;document.getElementById('f-m').value=s.m;document.getElementById('f-d').value=s.d;buildFacetSelects(s);updatePreview();showSheet();}
 function closeSheet(){document.getElementById('sheet-bg').classList.remove('show');document.getElementById('sheet').classList.remove('show');}
-function readForm(){const y=+document.getElementById('f-y').value,m=+document.getElementById('f-m').value,d=+document.getElementById('f-d').value,name=document.getElementById('f-name').value.trim();const valid=name&&y>1900&&y<2100&&m>=1&&m<=12&&d>=1&&d<=31;return{y,m,d,name,valid};}
+function readForm(){const y=+document.getElementById('f-y').value,m=+document.getElementById('f-m').value,d=+document.getElementById('f-d').value,name=document.getElementById('f-name').value.trim();const valid=name&&y>1900&&y<2100&&m>=1&&m<=12&&d>=1&&d<=31;const fac={};FACETS.forEach(f=>{const el=document.getElementById('f-'+f.k);fac[f.k]=el?el.value:'';});return{y,m,d,name,valid,...fac};}
 function updatePreview(){const f=readForm();const pv=document.getElementById('preview');const btn=document.getElementById('save-btn');
- if(f.y>1900&&f.y<2100&&f.m>=1&&f.m<=12&&f.d>=1&&f.d<=31){const[ch,an]=animalOf(f.y,f.m,f.d);const g=GROUP[an];pv.innerHTML=`<div class="pem">${EMOJI[an]}</div><div class="pinfo"><div class="pan">${an}型 <span class="gbadge g-${g}" style="vertical-align:middle">${g}</span></div><div class="pch">${ch}</div></div>`;}
- else{pv.innerHTML=`<div class="ph">↑ 生年月日を入れると動物タイプが表示されます</div>`;}
+ if(f.y>1900&&f.y<2100&&f.m>=1&&f.m<=12&&f.d>=1&&f.d<=31){const[ch,an]=animalOf(f.y,f.m,f.d);const g=GROUP[an];pv.innerHTML=`<div class="pem">${EMOJI[an]}</div><div class="pinfo"><div class="pan">本質：${an}型 <span class="gbadge g-${g}" style="vertical-align:middle">${g}</span></div><div class="pch">${ch}</div></div>`;}
+ else{pv.innerHTML=`<div class="ph">↑ 生年月日を入れると本質タイプが表示されます</div>`;}
  btn.disabled=!f.valid;
 }
-function saveStaff(){const f=readForm();if(!f.valid)return;STAFF.push(enrich({name:f.name,role:document.getElementById('f-role').value.trim(),y:f.y,m:f.m,d:f.d}));save();buildStaff();closeSheet();}
+function saveStaff(){const f=readForm();if(!f.valid)return;const obj=enrich({name:f.name,role:document.getElementById('f-role').value.trim(),y:f.y,m:f.m,d:f.d,h:f.h,i:f.i,kb:f.kb,kk:f.kk});const wasEdit=editIndex;if(wasEdit!=null)STAFF[wasEdit]=obj;else STAFF.push(obj);save();buildStaff();closeSheet();editIndex=null;if(wasEdit!=null)detail(wasEdit);}
 
 /* ═══ 相性 ═══ */
 let selA="ライオン",selB="ひつじ";
