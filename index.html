@@ -151,6 +151,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic',sa
 .facet-sel label{font-size:10px;color:#8e8e93;font-weight:700;display:block;margin-bottom:3px;}
 .facet-sel select{width:100%;border:2px solid #e5e5ea;border-radius:9px;padding:9px 8px;font-size:14px;font-weight:600;color:#1c1c1e;outline:none;background:#fff;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2 4l4 4 4-4' stroke='%238e8e93' stroke-width='1.5' fill='none'/></svg>");background-repeat:no-repeat;background-position:right 8px center;}
 .facet-sel select:focus{border-color:var(--ind);}
+.cmp-row{display:flex;align-items:center;gap:10px;}
+.cmp-row label{font-size:12px;color:#8e8e93;font-weight:700;width:42px;flex-shrink:0;}
+.cmp-row select{flex:1;border:2px solid #e5e5ea;border-radius:10px;padding:10px 9px;font-size:15px;font-weight:700;color:#1c1c1e;outline:none;background:#fff;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2 4l4 4 4-4' stroke='%238e8e93' stroke-width='1.5' fill='none'/></svg>");background-repeat:no-repeat;background-position:right 10px center;}
+.cmp-row select:focus{border-color:var(--ind);}
+.bestmatch-badge{display:inline-block;background:#FEF3C7;color:#B45309;font-size:11px;font-weight:800;padding:3px 10px;border-radius:20px;margin-top:6px;}
 </style>
 </head>
 <body>
@@ -182,10 +187,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic',sa
 
   <!-- COMPAT -->
   <div class="scr" id="s-compat">
-    <div class="hdr"><div><div class="logo" style="font-size:16px">相性診断</div><div class="sub">2タイプの組み合わせを自動分析</div></div></div>
+    <div class="hdr"><div><div class="logo" style="font-size:16px">相性診断</div><div class="sub">登録スタッフ同士で自動分析</div></div></div>
     <div class="scroll">
-      <div class="card"><div class="ctitle">① 1人目のタイプ</div><div class="pick-grid" id="pickA"></div></div>
-      <div class="card"><div class="ctitle">② 2人目のタイプ</div><div class="pick-grid" id="pickB"></div></div>
+      <div class="card"><div class="ctitle">スタッフを2人選ぶ</div>
+        <div class="cmp-row"><label>1人目</label><select id="cmpA" onchange="calcCompat()"></select></div>
+        <div class="cmp-row" style="margin-top:10px"><label>2人目</label><select id="cmpB" onchange="calcCompat()"></select></div>
+      </div>
       <div id="compat-out"></div>
     </div>
     <div class="nav" id="nav-compat"></div>
@@ -278,6 +285,10 @@ const ORGFUNC=[
  {name:"調和・サポート",animals:["ひつじ","たぬき","こじか","子守熊"],desc:"まとめる・支える"},
 ];
 const LEADERS=["ライオン","虎","ゾウ"];
+/* 一般に動物占いで「相性が良い」とされる組み合わせ（複数サイトから収集・諸説あり）*/
+const BESTMATCH=new Set(["ライオン|チータ","たぬき|ライオン","狼|虎","狼|ペガサス","こじか|黒ひょう","ひつじ|ゾウ","チータ|猿","子守熊|ひつじ","虎|黒ひょう","猿|ゾウ","たぬき|ひつじ"].map(k=>k.split("|").sort().join("|")));
+function pairKey(a,b){return [a,b].sort().join("|");}
+function isBestMatch(a,b){return BESTMATCH.has(pairKey(a,b));}
 
 /* ═══ 60分類キャラ（運命数で自動・同じ動物でも個別化）═══ */
 /* 公式の60キャラ名（検証済み）＋基本動物特性をもとにした個別特徴。生年月日のみで確定。*/
@@ -456,51 +467,61 @@ function updatePreview(){const f=readForm();const pv=document.getElementById('pr
 function saveStaff(){const f=readForm();if(!f.valid)return;const obj=enrich({name:f.name,role:document.getElementById('f-role').value.trim(),y:f.y,m:f.m,d:f.d,h:f.h,i:f.i,kb:f.kb,kk:f.kk});const wasEdit=editIndex;if(wasEdit!=null)STAFF[wasEdit]=obj;else STAFF.push(obj);save();buildStaff();closeSheet();editIndex=null;if(wasEdit!=null)detail(wasEdit);}
 
 /* ═══ 相性 ═══ */
-let selA="ライオン",selB="ひつじ";
-function buildPicks(){
- document.getElementById('pickA').innerHTML=ALL12.map(a=>`<div class="pick${selA===a?' sel':''}" onclick="setPick('A','${a}')"><span class="pe">${EMOJI[a]}</span><span class="pn">${a}</span></div>`).join('');
- document.getElementById('pickB').innerHTML=ALL12.map(a=>`<div class="pick${selB===a?' sel':''}" onclick="setPick('B','${a}')"><span class="pe">${EMOJI[a]}</span><span class="pn">${a}</span></div>`).join('');
+let cmpA=0,cmpB=1;
+function buildCompatPickers(){
+ const a=document.getElementById('cmpA'),b=document.getElementById('cmpB');
+ if(!a||!b)return;
+ if(cmpA>=STAFF.length)cmpA=0;
+ if(cmpB>=STAFF.length)cmpB=Math.min(1,Math.max(0,STAFF.length-1));
+ const opts=STAFF.map((s,i)=>`<option value="${i}">${esc(s.name)}（${s.animal}）</option>`).join('');
+ a.innerHTML=opts;b.innerHTML=opts;a.value=cmpA;b.value=cmpB;
 }
-function setPick(s,a){if(s==='A')selA=a;else selB=a;buildPicks();calcCompat();}
 function calcCompat(){
- const a=selA,b=selB,ga=GROUP[a],gb=GROUP[b],pa=P[a],pb=P[b];
+ const out=document.getElementById('compat-out');
+ if(STAFF.length<2){out.innerHTML=`<div class="card"><div class="empty">相性診断にはスタッフが2人以上必要です。<br>ホームから登録してください。</div></div>`;return;}
+ cmpA=+document.getElementById('cmpA').value;cmpB=+document.getElementById('cmpB').value;
+ if(cmpA===cmpB){out.innerHTML=`<div class="card"><div class="empty">違う2人を選んでください。</div></div>`;return;}
+ const sa=STAFF[cmpA],sb=STAFF[cmpB],a=sa.animal,b=sb.animal,ga=GROUP[a],gb=GROUP[b],pa=P[a],pb=P[b];
+ const na=esc(sa.name),nb=esc(sb.name);
  let base,label,relType;
- if(a===b){base=70;label="鏡うつし（同じタイプ）";relType="same";}
+ if(a===b){base=70;label="同じタイプ";relType="same";}
  else if(ga===gb){base=80;label=`同じ${ga}グループ`;relType="group";}
  else{base=66;label="じゃんけん関係";relType="janken";}
+ const best=isBestMatch(a,b);
  const nub=((ALL12.indexOf(a)+ALL12.indexOf(b))%7)-3;
- const score=Math.max(45,Math.min(95,base+(relType==="same"?0:nub)));
- let W,L,gW,gL;
- if(relType==="janken"){const aWins=BEATS[ga]===gb;W=aWins?a:b;L=aWins?b:a;gW=aWins?ga:gb;gL=aWins?gb:ga;}
+ let score=base+(relType==="same"?0:nub);if(best)score=Math.max(score,84)+2;score=Math.max(45,Math.min(97,score));
  let comp,clash,trouble,roles,advice;
  if(relType==="same"){
-  comp=`同じ${a}型。価値観もテンポも同じで、説明なしで通じ合えるツーカーの関係。`;
+  comp=`${na}さんと${nb}さんは同じ${a}型。価値観もテンポも同じで、説明なしで通じ合えるツーカーの関係。`;
   clash=`強みも弱みも同じ。二人とも「${pa.wk[0]}」が同時に出やすく、短所が増幅する。${PACE[a]}者どうしで譲り合えないことも。`;
   trouble=`同じ場面で同じようにつまずく。どちらも${pa.wk[1]||pa.wk[0]}ため、フォローし合えず空回りすることがある。`;
   roles=`役割を意図的にずらす。片方を「決める係」、片方を「支える係」に分け、同じ土俵で張り合わせない。`;
-  advice=`弱みを補えるタイプ（別グループ）を間に入れると安定する。`;
+  advice=`弱みを補えるタイプ（別グループ）のメンバーを間に入れると安定する。`;
  } else if(relType==="group"){
-  comp=`同じ${ga}グループ（${GMETA[ga].value}）。土台の価値観が同じで安心して組める。${a}の${pa.str[0]}と${b}の${pb.str[0]}で力を出し合える。`;
+  comp=`${na}さんと${nb}さんは同じ${ga}グループ（${GMETA[ga].value}）。土台の価値観が同じで安心して組める。${na}さんの${pa.str[0]}と${nb}さんの${pb.str[0]}で力を出し合える。`;
   clash=`似た者どうしゆえ${ga}共通の弱点「${GMETA[ga].weak}」が両方に出やすい。${a}は${PACE[a]}、${b}は${PACE[b]}ので、テンポのズレが小さな火種に。`;
   trouble=`どちらも${GMETA[ga].weak}ため、問題が起きても二人とも踏み込めず先送りになりがち。`;
   roles=`相性は良い。二人に「${GMETA[ga].weak}」を補う共通ルール（例：気づきは必ず口に出す）を持たせると盤石。`;
   advice=`違うグループのメンバーを一人混ぜると、欠けがちな視点が補える。`;
  } else {
-  comp=`${W}（${gW}）の伝え方が${L}（${gL}）に届きやすい関係。${W}が引っ張り、${L}が${P[L].core}で支えると噛み合う。`;
-  clash=`重視点が違う。「${GMETA[ga].axis}」の${a}（${PACE[a]}）と「${GMETA[gb].axis}」の${b}（${PACE[b]}）で、テンポと優先順位がズレやすい。`;
-  trouble=`${a}から見ると${b}の「${pb.wk[0]}」が、${b}から見ると${a}の「${pa.wk[0]}」が気になりやすい。急ぐ場面ほど摩擦が出る。`;
-  roles=`${W}が方向を決めるリード役、${L}が実務・支え役と役割を明文化すると安定する。`;
+  const aWins=BEATS[ga]===gb;const Wn=aWins?na:nb,Ln=aWins?nb:na,Wa=aWins?a:b,La=aWins?b:a;
+  comp=`${Wn}さん（${Wa}）の伝え方が${Ln}さん（${La}）に届きやすい関係。${Wn}さんが引っ張り、${Ln}さんが${P[La].core}で支えると噛み合う。`;
+  clash=`重視点が違う。「${GMETA[ga].axis}」の${na}さん（${a}・${PACE[a]}）と「${GMETA[gb].axis}」の${nb}さん（${b}・${PACE[b]}）で、テンポと優先順位がズレやすい。`;
+  trouble=`${na}さんから見ると${nb}さんの「${pb.wk[0]}」が、逆に${nb}さんから見ると${na}さんの「${pa.wk[0]}」が気になりやすい。急ぐ場面ほど摩擦が出る。`;
+  roles=`${Wn}さんが方向を決めるリード役、${Ln}さんが実務・支え役と役割を明文化すると安定する。`;
   advice=`「${GMETA[ga].axis}」と「${GMETA[gb].axis}」の違いを"優劣でなく分担"と捉えると衝突が減る。`;
  }
- const col=score>=78?'#10B981':score>=68?'#F59E0B':'#6366F1';
- document.getElementById('compat-out').innerHTML=`
-  <div class="card" style="text-align:center"><div class="ctitle">相性スコア</div><div class="score-big" style="color:${col}">${score}<span style="font-size:20px">点</span></div><div class="score-lbl">${EMOJI[a]}${a} × ${EMOJI[b]}${b} ・ ${label}</div></div>
+ const fiveNote=(sa.h&&sb.h)?`<div class="citem"><div class="chead">🎭 初対面での見え方（5アニマル）</div><div class="cbody">${na}さんは表面【${sa.h}】、${nb}さんは表面【${sb.h}】。最初はお互い本質（${a}・${b}）と違う第一印象から入るので、見た目だけで判断しないこと。</div></div>`:'';
+ const col=score>=80?'#10B981':score>=68?'#F59E0B':'#6366F1';
+ out.innerHTML=`
+  <div class="card" style="text-align:center"><div class="ctitle">相性スコア</div><div class="score-big" style="color:${col}">${score}<span style="font-size:20px">点</span></div><div class="score-lbl">${EMOJI[a]}${na} × ${EMOJI[b]}${nb}</div><div style="font-size:11px;color:#8e8e93;margin-top:3px">${a}（${sa.chara}）× ${b}（${sb.chara}）・ ${label}</div>${best?`<div class="bestmatch-badge">🌟 動物占いで相性が良いとされる組み合わせ</div>`:''}</div>
   <div class="card">
    <div class="citem"><div class="chead">💞 補完できる点</div><div class="cbody">${comp}</div></div>
    <div class="citem"><div class="chead">⚡ 衝突しやすい点</div><div class="cbody">${clash}</div></div>
    <div class="citem"><div class="chead">🎭 起こりやすいトラブル</div><div class="cbody">${trouble}</div></div>
    <div class="citem"><div class="chead">🧩 役割分担のおすすめ</div><div class="cbody">${roles}</div></div>
    <div class="citem"><div class="chead">💡 改善アドバイス</div><div class="cbody">${advice}</div></div>
+   ${fiveNote}
   </div>`;
 }
 
@@ -571,10 +592,10 @@ function buildPos(){
 /* ═══ ナビ ═══ */
 const NAV=[["s-home","🏠","ホーム"],["s-compat","💫","相性"],["s-org","📊","組織"],["s-pos","🎯","適性"]];
 function buildNav(){["home","compat","org","pos"].forEach(k=>{const cur="s-"+k;const nav=document.getElementById("nav-"+k);if(nav)nav.innerHTML=NAV.map(([id,ic,lb])=>`<button class="nitem${cur===id?' active':''}" onclick="go('${id}')"><span class="nicon">${ic}</span><span class="nlabel">${lb}</span></button>`).join('');});}
-function go(id){document.querySelectorAll('.scr').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');if(id==='s-compat'){buildPicks();calcCompat();}if(id==='s-org')buildOrg();if(id==='s-pos')buildPos();window.scrollTo&&document.querySelector('#'+id+' .scroll')?.scrollTo(0,0);}
+function go(id){document.querySelectorAll('.scr').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');if(id==='s-compat'){buildCompatPickers();calcCompat();}if(id==='s-org')buildOrg();if(id==='s-pos')buildPos();window.scrollTo&&document.querySelector('#'+id+' .scroll')?.scrollTo(0,0);}
 
 /* ═══ 起動 ═══ */
-load();buildStaff();buildNav();buildPicks();calcCompat();
+load();buildStaff();buildNav();buildCompatPickers();calcCompat();
 </script>
 </body>
 </html>
