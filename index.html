@@ -269,6 +269,16 @@ const FACETS=[
  {k:"kk",label:"隠れ", emoji:"🌑", pct:"裏の顔", sub:"本人も気づきにくい一面", frame:a=>`ふとした時に【${a}】が顔を出します。奥では「${FE[a]}」一面があり、追い込まれた時ほど出やすい。`},
 ];
 
+/* ═══ 相性・組織分析の基礎データ ═══ */
+const PACE={"ライオン":"即断で主導する","チータ":"高速で勢いよく動く","ゾウ":"じっくり完璧を目指す","ペガサス":"気分と直感で動く","狼":"自分のペースを崩さない","猿":"軽快に気分で動く","虎":"慎重にどっしり構える","子守熊":"ゆっくり長期で構える","黒ひょう":"スマートに気分で動く","ひつじ":"周りに合わせて動く","こじか":"ていねいに慎重に動く","たぬき":"様子を見て調整する"};
+const ORGFUNC=[
+ {name:"推進・決断",animals:["ライオン","虎","ゾウ","チータ"],desc:"引っ張る・決める"},
+ {name:"接客・ムード",animals:["猿","チータ","黒ひょう","ひつじ"],desc:"場を明るく・対人"},
+ {name:"堅実・品質",animals:["狼","こじか","子守熊","ゾウ"],desc:"確実・専門・品質"},
+ {name:"調和・サポート",animals:["ひつじ","たぬき","こじか","子守熊"],desc:"まとめる・支える"},
+];
+const LEADERS=["ライオン","虎","ゾウ"];
+
 /* ═══ 60分類キャラ（運命数で自動・同じ動物でも個別化）═══ */
 /* 公式の60キャラ名（検証済み）＋基本動物特性をもとにした個別特徴。生年月日のみで確定。*/
 const SUB60={
@@ -453,20 +463,64 @@ function buildPicks(){
 }
 function setPick(s,a){if(s==='A')selA=a;else selB=a;buildPicks();calcCompat();}
 function calcCompat(){
- const a=selA,b=selB,ga=GROUP[a],gb=GROUP[b];let score,label,good,clash,advice;
- if(a===b){score=70;label="鏡うつし";good=`同じ${a}型どうし。価値観が同じで説明不要のツーカー。`;clash="弱みも同じ。二人とも同じ場面でつまずき、短所が増幅する。";advice="役割を少しずらし、片方が苦手を補う配置を意識する。";}
- else if(ga===gb){score=76;label="同グループ";good=`同じ${ga}グループ。「${GMETA[ga].value}」という土台が同じで安心して組める。`;clash=`似た者どうしゆえ、${ga}共通の弱点（${GMETA[ga].weak}）が両方に出やすい。`;advice="違うグループのメンバーを一人混ぜると視点が補える。";}
- else{const aWins=BEATS[ga]===gb;const W=aWins?a:b,L=aWins?b:a,gW=aWins?ga:gb,gL=aWins?gb:ga;
-  score=66;label="じゃんけん関係";
-  good=`${W}（${gW}）の伝え方が${L}（${gL}）に届きやすい関係。${W}が引っ張り${L}が支えると噛み合う。`;
-  clash=`優先するものが違う。「${GMETA[ga].axis}」を大切にする${a} と 「${GMETA[gb].axis}」を大切にする${b} でペースがずれる。`;
-  advice=`${W}がリード役、${L}が実務役と役割を明文化すると安定する。`;}
+ const a=selA,b=selB,ga=GROUP[a],gb=GROUP[b],pa=P[a],pb=P[b];
+ let base,label,relType;
+ if(a===b){base=70;label="鏡うつし（同じタイプ）";relType="same";}
+ else if(ga===gb){base=80;label=`同じ${ga}グループ`;relType="group";}
+ else{base=66;label="じゃんけん関係";relType="janken";}
+ const nub=((ALL12.indexOf(a)+ALL12.indexOf(b))%7)-3;
+ const score=Math.max(45,Math.min(95,base+(relType==="same"?0:nub)));
+ let W,L,gW,gL;
+ if(relType==="janken"){const aWins=BEATS[ga]===gb;W=aWins?a:b;L=aWins?b:a;gW=aWins?ga:gb;gL=aWins?gb:ga;}
+ let comp,clash,trouble,roles,advice;
+ if(relType==="same"){
+  comp=`同じ${a}型。価値観もテンポも同じで、説明なしで通じ合えるツーカーの関係。`;
+  clash=`強みも弱みも同じ。二人とも「${pa.wk[0]}」が同時に出やすく、短所が増幅する。${PACE[a]}者どうしで譲り合えないことも。`;
+  trouble=`同じ場面で同じようにつまずく。どちらも${pa.wk[1]||pa.wk[0]}ため、フォローし合えず空回りすることがある。`;
+  roles=`役割を意図的にずらす。片方を「決める係」、片方を「支える係」に分け、同じ土俵で張り合わせない。`;
+  advice=`弱みを補えるタイプ（別グループ）を間に入れると安定する。`;
+ } else if(relType==="group"){
+  comp=`同じ${ga}グループ（${GMETA[ga].value}）。土台の価値観が同じで安心して組める。${a}の${pa.str[0]}と${b}の${pb.str[0]}で力を出し合える。`;
+  clash=`似た者どうしゆえ${ga}共通の弱点「${GMETA[ga].weak}」が両方に出やすい。${a}は${PACE[a]}、${b}は${PACE[b]}ので、テンポのズレが小さな火種に。`;
+  trouble=`どちらも${GMETA[ga].weak}ため、問題が起きても二人とも踏み込めず先送りになりがち。`;
+  roles=`相性は良い。二人に「${GMETA[ga].weak}」を補う共通ルール（例：気づきは必ず口に出す）を持たせると盤石。`;
+  advice=`違うグループのメンバーを一人混ぜると、欠けがちな視点が補える。`;
+ } else {
+  comp=`${W}（${gW}）の伝え方が${L}（${gL}）に届きやすい関係。${W}が引っ張り、${L}が${P[L].core}で支えると噛み合う。`;
+  clash=`重視点が違う。「${GMETA[ga].axis}」の${a}（${PACE[a]}）と「${GMETA[gb].axis}」の${b}（${PACE[b]}）で、テンポと優先順位がズレやすい。`;
+  trouble=`${a}から見ると${b}の「${pb.wk[0]}」が、${b}から見ると${a}の「${pa.wk[0]}」が気になりやすい。急ぐ場面ほど摩擦が出る。`;
+  roles=`${W}が方向を決めるリード役、${L}が実務・支え役と役割を明文化すると安定する。`;
+  advice=`「${GMETA[ga].axis}」と「${GMETA[gb].axis}」の違いを"優劣でなく分担"と捉えると衝突が減る。`;
+ }
+ const col=score>=78?'#10B981':score>=68?'#F59E0B':'#6366F1';
  document.getElementById('compat-out').innerHTML=`
-  <div class="card" style="text-align:center"><div class="ctitle">相性スコア</div><div class="score-big" style="color:${score>=74?'#10B981':score>=68?'#F59E0B':'#6366F1'}">${score}<span style="font-size:20px">点</span></div><div class="score-lbl">${EMOJI[a]}${a} × ${EMOJI[b]}${b} ・ ${label}</div></div>
-  <div class="card"><div class="citem"><div class="chead">相性の良い点</div><div class="cbody">✅ ${good}</div></div><div class="citem"><div class="chead">衝突しやすいポイント</div><div class="cbody">⚠️ ${clash}</div></div><div class="citem"><div class="chead">関係改善アドバイス</div><div class="cbody">💡 ${advice}</div></div></div>`;
+  <div class="card" style="text-align:center"><div class="ctitle">相性スコア</div><div class="score-big" style="color:${col}">${score}<span style="font-size:20px">点</span></div><div class="score-lbl">${EMOJI[a]}${a} × ${EMOJI[b]}${b} ・ ${label}</div></div>
+  <div class="card">
+   <div class="citem"><div class="chead">💞 補完できる点</div><div class="cbody">${comp}</div></div>
+   <div class="citem"><div class="chead">⚡ 衝突しやすい点</div><div class="cbody">${clash}</div></div>
+   <div class="citem"><div class="chead">🎭 起こりやすいトラブル</div><div class="cbody">${trouble}</div></div>
+   <div class="citem"><div class="chead">🧩 役割分担のおすすめ</div><div class="cbody">${roles}</div></div>
+   <div class="citem"><div class="chead">💡 改善アドバイス</div><div class="cbody">${advice}</div></div>
+  </div>`;
 }
 
 /* ═══ 組織分析 ═══ */
+function pairTension(a,b){
+ const ga=GROUP[a],gb=GROUP[b];
+ if(a===b){const assertive=["ライオン","虎","ゾウ","狼","チータ"].includes(a);return assertive?{score:64,reason:`同じ${a}型どうしで主導権・やり方がぶつかりやすい`}:{score:72,reason:`同じ${a}型で似すぎ、互いの弱みを補えない`};}
+ if(ga===gb)return{score:80,reason:null};
+ return{score:66,reason:`${a}と${b}はテンポ・重視点が違い摩擦が出やすい`};
+}
+function orgPrescription(top,bottom,leaderCount,funcCov){
+ const tips=[];
+ if(top==="MOON")tips.push("和を大事にする反面、本音や課題が出にくい。「意見を言う場」を定例化する。");
+ if(top==="EARTH")tips.push("実務は堅いが、変化や新しい挑戦が後回しになりやすい。小さな新企画を意識的に回す。");
+ if(top==="SUN")tips.push("発想と勢いはあるが、地道な継続やフォローが弱い。締めの実務役を明確にする。");
+ if(!leaderCount)tips.push("決断役が不在。権限を一部のスタッフに正式に渡す。");
+ if(funcCov.find(f=>f.name==="調和・サポート"&&f.c===0))tips.push("潤滑油役がいない。衝突が表面化しやすいので調整役を補う。");
+ tips.push(`不足しがちな${bottom}グループの視点（${GMETA[bottom].value}）を、会議や評価で意識的に拾う。`);
+ return tips.map(t=>"・"+t).join("\n");
+}
 function buildOrg(){
  const body=document.getElementById('org-body');
  if(!STAFF.length){body.innerHTML=`<div class="empty">スタッフを登録すると組織分析が表示されます。</div>`;return;}
@@ -475,12 +529,33 @@ function buildOrg(){
  const missing=ALL12.filter(a=>!acnt[a]);
  const sorted=Object.entries(cnt).sort((x,y)=>y[1]-x[1]);
  const top=sorted[0],bottom=sorted[2];
+ const funcCov=ORGFUNC.map(f=>({...f,c:STAFF.filter(s=>f.animals.includes(s.animal)).length}));
+ const leaderStaff=STAFF.filter(s=>LEADERS.includes(s.animal));
+ const lone=STAFF.filter(s=>cnt[s.group]===1);
+ const present=ALL12.filter(a=>acnt[a]).map(a=>`${EMOJI[a]}${a}×${acnt[a]}`);
+ const pairs=[];for(let i=0;i<STAFF.length;i++)for(let j=i+1;j<STAFF.length;j++){const t=pairTension(STAFF[i].animal,STAFF[j].animal);if(t.reason)pairs.push({a:STAFF[i],b:STAFF[j],...t});}
+ pairs.sort((x,y)=>x.score-y.score);
+ const hot=[],used={};
+ for(const p of pairs){if(hot.length>=3)break;if((used[p.a.name]||0)<1&&(used[p.b.name]||0)<1){hot.push(p);used[p.a.name]=1;used[p.b.name]=1;}}
+ for(const p of pairs){if(hot.length>=3)break;if(!hot.includes(p))hot.push(p);}
  body.innerHTML=`
-  <div class="card"><div class="ctitle">3グループ分布（${tot}名）</div>${["MOON","EARTH","SUN"].map(g=>`<div class="dist"><div class="dist-top"><span style="font-weight:700;color:${gcol[g]}">${g}</span><span style="color:#8e8e93">${cnt[g]}名</span></div><div class="dist-bar"><div class="dist-fill" style="background:${gcol[g]};width:${cnt[g]/tot*100}%"></div></div></div>`).join('')}<div style="font-size:11px;color:#8e8e93;margin-top:6px">${top[1]===bottom[1]?'バランスよく分散しています。':`${top[0]}が最多・${bottom[0]}が最少。バランスに偏りがあります。`}</div></div>
+  <div class="card"><div class="ctitle">3グループ分布（${tot}名）</div>${["MOON","EARTH","SUN"].map(g=>`<div class="dist"><div class="dist-top"><span style="font-weight:700;color:${gcol[g]}">${g}</span><span style="color:#8e8e93">${cnt[g]}名</span></div><div class="dist-bar"><div class="dist-fill" style="background:${gcol[g]};width:${cnt[g]/tot*100}%"></div></div></div>`).join('')}<div style="font-size:11px;color:#8e8e93;margin-top:6px">${top[1]===bottom[1]?'バランスよく分散しています。':`${top[0]}が最多・${bottom[0]}が最少。偏りがあります。`}</div></div>
+
+  <div class="card"><div class="ctitle">12タイプの内訳</div><div style="font-size:13px;line-height:1.9">${present.join('  /  ')}</div>${missing.length?`<div style="font-size:11px;color:#8e8e93;margin-top:6px">在籍なし：${missing.map(a=>EMOJI[a]+a).join(' ')}</div>`:''}</div>
+
+  <div class="card"><div class="ctitle">機能バランス（役割カバー）</div>${funcCov.map(f=>{const lv=f.c===0?['✗','#EF4444']:f.c===1?['△','#F59E0B']:['◎','#10B981'];return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #f4f4f6"><span style="font-size:15px;font-weight:800;color:${lv[1]};width:18px;text-align:center">${lv[0]}</span><div style="flex:1"><div style="font-size:13px;font-weight:700">${f.name}</div><div style="font-size:10px;color:#8e8e93">${f.desc}</div></div><span style="font-size:12px;color:#8e8e93">${f.c}名</span></div>`;}).join('')}${funcCov.some(f=>f.c===0)?`<div style="font-size:11px;color:#EF4444;margin-top:6px">✗の機能は誰も担えていません。採用や役割付与で補強を。</div>`:''}</div>
+
+  <div class="card"><div class="ctitle" style="color:${leaderStaff.length?'#10B981':'#EF4444'}">👑 リーダー候補</div>${leaderStaff.length?`<div style="font-size:13px;line-height:1.7">${leaderStaff.map(s=>`${EMOJI[s.animal]} ${esc(s.name)}（${s.animal}）`).join('<br>')}</div>`:`<div class="ival" style="color:#B91C1C">統率タイプ（ライオン・虎・ゾウ）が不在。決断・牽引役が弱く、トラブル時に動きが遅れます。採用 or 既存スタッフへの権限付与を検討。</div>`}</div>
+
   <div class="card"><div class="ctitle" style="color:#D97706">⚡ 組織の強み</div><div class="ival">${top[0]}グループが厚い＝${GMETA[top[0]].value}文化が根づいています。この強みを軸にできます。</div></div>
-  <div class="card"><div class="ctitle" style="color:#EF4444">⚠ 組織の弱み・離職リスク</div><div class="ival">${bottom[0]}グループが手薄＝「${GMETA[bottom[0]].value}」役割が不足。${bottom[0]}型の人は少数ゆえ孤立しやすく、離職リスクが高まります。定期的な声がけを。</div></div>
-  <div class="card"><div class="ctitle" style="color:#4F46E5">📋 不足タイプ（採用で補う）</div>${missing.length?`<div class="chips">${missing.map(a=>`<span class="chip" style="background:#F3F4F6;color:#374151">${EMOJI[a]} ${a}</span>`).join('')}</div><div style="font-size:11px;color:#8e8e93;margin-top:8px">在籍ゼロのタイプ。${bottom[0]}グループから優先的に補うとバランスが整います。</div>`:`<div class="ival">全12タイプが揃っています。理想的な多様性です。</div>`}</div>
-  <div class="card"><div class="ctitle">🤝 強いチーム編成の例</div><div class="ival">接客：ひつじ(気配り)×猿(明るさ)×虎/ライオン(即断)\n調理：狼(技術)×ゾウ(粘り)×子守熊(安定)\n\n衝突注意：ライオン×ライオン（主導権争い）、狼×猿（ペースが逆）→ 間に虎・たぬきを置くと緩和。</div></div>`;
+
+  <div class="card"><div class="ctitle" style="color:#EF4444">⚠ 弱み・離職リスク</div><div class="ival">${bottom[0]}グループが手薄＝「${GMETA[bottom[0]].value}」役割が不足。</div>${lone.length?`<div style="font-size:12px;color:#B91C1C;margin-top:8px;background:#FEF2F2;border-radius:9px;padding:9px 11px">🚨 孤立しやすい人：${lone.map(s=>esc(s.name)+'（'+s.group+'唯一）').join('、')}。少数派は職場で浮きやすく離職リスク高め。意識的な声がけを。</div>`:''}</div>
+
+  ${hot.length?`<div class="card"><div class="ctitle" style="color:#B91C1C">🔥 衝突ホットスポット（要注意ペア）</div>${hot.map(h=>`<div style="font-size:12.5px;line-height:1.6;padding:7px 0;border-bottom:1px solid #f4f4f6"><b>${EMOJI[h.a.animal]}${esc(h.a.name)} × ${EMOJI[h.b.animal]}${esc(h.b.name)}</b><br><span style="color:#6B7280">${h.reason}</span></div>`).join('')}<div style="font-size:11px;color:#8e8e93;margin-top:6px">→ 役割を分ける／間に調整役（ひつじ・たぬき）を置くと緩和。</div></div>`:''}
+
+  <div class="card"><div class="ctitle" style="color:#4F46E5">📋 採用で補うべきタイプ</div>${missing.length?`<div class="chips">${missing.map(a=>`<span class="chip" style="background:#F3F4F6;color:#374151">${EMOJI[a]} ${a}</span>`).join('')}</div><div style="font-size:11px;color:#8e8e93;margin-top:8px">特に${bottom[0]}グループ${!leaderStaff.length?'と統率タイプ':''}から優先的に。</div>`:`<div class="ival">全12タイプ在籍。理想的な多様性です。</div>`}</div>
+
+  <div class="card"><div class="ctitle">🩺 このチームへの処方箋</div><div class="ival">${orgPrescription(top[0],bottom[0],leaderStaff.length,funcCov)}</div></div>`;
 }
 
 /* ═══ ポジション適性 ═══ */
