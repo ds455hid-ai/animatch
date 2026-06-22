@@ -156,6 +156,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic',sa
 .cmp-row select{flex:1;border:2px solid #e5e5ea;border-radius:10px;padding:10px 9px;font-size:15px;font-weight:700;color:#1c1c1e;outline:none;background:#fff;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2 4l4 4 4-4' stroke='%238e8e93' stroke-width='1.5' fill='none'/></svg>");background-repeat:no-repeat;background-position:right 10px center;}
 .cmp-row select:focus{border-color:var(--ind);}
 .bestmatch-badge{display:inline-block;background:#FEF3C7;color:#B45309;font-size:11px;font-weight:800;padding:3px 10px;border-radius:20px;margin-top:6px;}
+.memo-area{width:100%;min-height:72px;border:2px solid #e5e5ea;border-radius:10px;padding:10px;font-size:13px;line-height:1.6;color:#1c1c1e;outline:none;resize:vertical;font-family:inherit;background:#FFFEF7;}
+.memo-area:focus{border-color:var(--ind);}
 </style>
 </head>
 <body>
@@ -381,7 +383,8 @@ const SAMPLE=[
 let STAFF=[];
 function enrich(s){const[ch,an]=animalOf(s.y,s.m,s.d);return{...s,chara:ch,animal:an,group:GROUP[an]};}
 function load(){let raw;try{raw=JSON.parse(localStorage.getItem(KEY));}catch(e){}STAFF=(raw&&raw.length?raw:SAMPLE).map(enrich);}
-function save(){localStorage.setItem(KEY,JSON.stringify(STAFF.map(s=>({name:s.name,role:s.role,y:s.y,m:s.m,d:s.d,h:s.h||"",i:s.i||"",kb:s.kb||"",kk:s.kk||""}))));}
+function save(){localStorage.setItem(KEY,JSON.stringify(STAFF.map(s=>({name:s.name,role:s.role,y:s.y,m:s.m,d:s.d,h:s.h||"",i:s.i||"",kb:s.kb||"",kk:s.kk||"",memo:s.memo||""}))));}
+function updateMemo(v){if(STAFF[curStaff]){STAFF[curStaff].memo=v;save();}}
 function resetData(){if(confirm("サンプルスタッフに戻します。追加したスタッフは消えますがよろしいですか？")){STAFF=SAMPLE.map(enrich);save();buildStaff();}}
 
 /* ═══ 描画 ═══ */
@@ -398,9 +401,12 @@ function detail(i){curStaff=i;const s=STAFF[i],p=P[s.animal],gm=GMETA[s.group];
  document.getElementById('d-name').textContent=s.name;
  document.getElementById('d-hero').style.background=gm.bg;
  document.getElementById('d-hero').innerHTML=`<div class="em">${EMOJI[s.animal]}</div><div class="ch">${s.chara}</div><div class="an">${s.animal}型</div><div class="gb">${gm.label}</div><div class="bd">${s.y}年${s.m}月${s.d}日生まれ · 運命数${unmei(s.y,s.m,s.d)}</div>`;
+ const sc60=SUB60[unmei(s.y,s.m,s.d)];
  document.getElementById('d-karte').innerHTML=`
   ${fiveStrip(s)}
   ${subCharCard(s)}
+  <div class="ctitle" style="margin:4px 2px 8px">👀 あなたの観察メモ</div>
+  <div class="card"><textarea class="memo-area" placeholder="この人を見て気づいたことを書く（例：朝は無口だが午後から調子が上がる／お客様の名前を覚えるのが得意）" oninput="updateMemo(this.value)">${esc(s.memo||'')}</textarea><div style="font-size:10px;color:#8e8e93;margin-top:5px">タイプ＋あなたの観察が、最も正確な"その人だけ"のカルテになります（自動保存）。</div></div>
   <div class="ctitle" style="margin:4px 2px 8px">本質 ―― 本当の自分（${s.chara}）</div>
   <div class="card"><div class="irow"><div class="ilabel">この人を一言で</div><div class="ival">${p.c}</div></div><div class="irow"><div class="ilabel">コアバリュー</div><div class="ival">${p.core}</div></div></div>
   <div class="card"><div class="irow"><div class="ilabel">強み</div><div class="chips">${p.str.map(x=>`<span class="chip g">✅ ${x}</span>`).join('')}</div></div><div class="irow"><div class="ilabel">弱み（折れ点）</div><div class="chips">${p.wk.map(x=>`<span class="chip b">⚠ ${x}</span>`).join('')}</div></div></div>
@@ -409,6 +415,8 @@ function detail(i){curStaff=i;const s=STAFF[i],p=P[s.animal],gm=GMETA[s.group];
   <button class="del-btn" onclick="delStaff(${i})">このスタッフを削除</button>`;
  document.getElementById('d-attack').innerHTML=`
   <div class="card">
+   ${sc60?`<div class="box" style="background:#EEF2FF;border:1px solid #c7d2fe"><div class="bl" style="color:#3730A3">🎯 ${s.chara}に効くコツ（細分化キャラ別）</div><div class="bv">${sc60.m}</div></div>`:''}
+   ${s.memo?`<div class="box" style="background:#FFFEF7;border:1px solid #FDE68A"><div class="bl" style="color:#92400E">👀 あなたのメモ</div><div class="bv">${esc(s.memo)}</div></div>`:''}
    <div class="box" style="background:#ECFDF5"><div class="bl" style="color:#065F46">👍 褒め方</div><div class="bv">${p.homeru}</div></div>
    <div class="box" style="background:#FEF2F2"><div class="bl" style="color:#991B1B">⚡ 叱り方</div><div class="bv">${p.shikaru}</div></div>
    <div class="box" style="background:#EFF6FF"><div class="bl" style="color:#1D4ED8">📋 指示の出し方</div><div class="bv">${p.shiji}</div></div>
@@ -464,7 +472,7 @@ function updatePreview(){const f=readForm();const pv=document.getElementById('pr
  else{pv.innerHTML=`<div class="ph">↑ 生年月日を入れると本質タイプが表示されます</div>`;}
  btn.disabled=!f.valid;
 }
-function saveStaff(){const f=readForm();if(!f.valid)return;const obj=enrich({name:f.name,role:document.getElementById('f-role').value.trim(),y:f.y,m:f.m,d:f.d,h:f.h,i:f.i,kb:f.kb,kk:f.kk});const wasEdit=editIndex;if(wasEdit!=null)STAFF[wasEdit]=obj;else STAFF.push(obj);save();buildStaff();closeSheet();editIndex=null;if(wasEdit!=null)detail(wasEdit);}
+function saveStaff(){const f=readForm();if(!f.valid)return;const wasEdit=editIndex;const prevMemo=(wasEdit!=null&&STAFF[wasEdit])?STAFF[wasEdit].memo:'';const obj=enrich({name:f.name,role:document.getElementById('f-role').value.trim(),y:f.y,m:f.m,d:f.d,h:f.h,i:f.i,kb:f.kb,kk:f.kk,memo:prevMemo});if(wasEdit!=null)STAFF[wasEdit]=obj;else STAFF.push(obj);save();buildStaff();closeSheet();editIndex=null;if(wasEdit!=null)detail(wasEdit);}
 
 /* ═══ 相性 ═══ */
 let cmpA=0,cmpB=1;
