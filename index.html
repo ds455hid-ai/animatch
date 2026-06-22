@@ -173,6 +173,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic',sa
       <div class="disclaimer">この結果は動物占いをもとにした<b>コミュニケーション支援</b>です。人事評価・採用選考の判断には使わないでください。データは端末内にのみ保存され、外部に送信されません。</div>
       <button class="add-btn" onclick="openSheet()">＋ スタッフを追加</button>
       <div class="card" style="padding:8px 14px"><div class="ctitle">スタッフ一覧（タップでカルテ）</div><div id="staff-list"></div></div>
+      <div class="card"><div class="ctitle">💾 データのバックアップ</div><div style="display:flex;gap:8px;margin-top:2px"><button onclick="exportData()" style="flex:1;background:#EEF2FF;color:var(--ind);border:none;border-radius:10px;padding:11px;font-size:13px;font-weight:700;cursor:pointer">⬇️ 書き出し</button><label style="flex:1;background:#F0FDF4;color:#15803D;border-radius:10px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;text-align:center;display:block">⬆️ 読み込み<input type="file" accept="application/json,.json" onchange="importData(this)" style="display:none"></label></div><div style="font-size:10px;color:#8e8e93;margin-top:8px;line-height:1.5">機種変更やデータ消失に備え、ときどき「書き出し」でファイル保存を。別の端末に移すときは「読み込み」。スタッフ情報は端末内のみ・外部送信なし。</div></div>
       <div class="note">生年月日を入力すると、動物占いの正式ロジックでタイプを自動判定します。</div>
     </div>
     <div class="nav" id="nav-home"></div>
@@ -182,9 +183,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic',sa
   <div class="scr" id="s-detail">
     <div class="hdr"><button class="back" onclick="go('s-home')">‹ 戻る</button><h1 id="d-name"></h1><button class="act" onclick="openEdit(curStaff)">編集</button></div>
     <div id="d-hero" class="dhero"></div>
-    <div class="tabs"><button class="tab active" id="t-k" onclick="dtab('k')">個人カルテ</button><button class="tab" id="t-a" onclick="dtab('a')">管理者 攻略カード</button></div>
+    <div class="tabs"><button class="tab active" id="t-k" onclick="dtab('k')">カルテ</button><button class="tab" id="t-a" onclick="dtab('a')">攻略カード</button><button class="tab" id="t-m" onclick="dtab('m')">面談</button></div>
     <div class="scroll" id="d-karte"></div>
     <div class="scroll" id="d-attack" style="display:none"></div>
+    <div class="scroll" id="d-mendan" style="display:none"></div>
   </div>
 
   <!-- COMPAT -->
@@ -282,6 +284,22 @@ const PX={
 "ゾウ":{work:"コツコツ努力家で専門性を極める。完成度優先で時間をかける。頑固。",comm:"まじめで一直線。冗談が通じにくいと思われがち。プロとして扱われたい。",boss:"専門性を認め任せる上司。意義を伝えてくれる人。",sub:"言ったことを必ずやり切る部下。専門領域を任せると第一人者に育つ。",eval:"専門性・努力・やり切る力を評価。プロとして認める。",motiv:"専門性の承認と意義。『さすがプロ』『あなたほど真剣な人はいない』。"},
 "ひつじ":{work:"気配りでチームを支える潤滑油。情報通。NOと言えず抱え込みやすい。",comm:"周りに合わせ和を保つ。本音を飲み込みがち。孤立に弱い。",boss:"存在を認め感謝を言葉にする上司。孤立させない人。",sub:"チームの調和を保つ部下。気配り役を任せ無理をさせない。",eval:"貢献・気配り・チームへの目配りを評価。見えにくい働きを拾う。",motiv:"感謝とつながり。『あなたのおかげ』『いつもありがとう』。孤立させない。"},
 "ペガサス":{work:"直感と自由な発想。乗ると爆発的。ムラがあり、ルールやコツコツは苦手。",comm:"感覚的で気分屋。ほめられて伸びる。束縛・理詰めを嫌う。",boss:"自由にやらせほめる上司。マニュアルで縛らない人。",sub:"企画・発想で光る部下。裁量を与え細かく管理しない。",eval:"発想・スケール・乗ったときの成果を評価。ムラを責めすぎない。",motiv:"自由と称賛。『自由にやって』『面白いね』。ルールで縛らない。"}
+};
+
+/* ═══ 面談サポート（タイプ別1on1）═══ */
+const MEN={
+"狼":{note:"手短に・干渉せず。理由を添えて、やり方は任せる。",open:"時間取ってくれてありがとう。手短に。最近の調子は？",q:["自分のやり方で進められてる？","邪魔に感じてること、ある？"],motivQ:"もっと任せてほしいこと、ある？",closing:"やり方は任せる。何かあれば言って。"},
+"こじか":{note:"穏やかに・否定しない。安心を最優先。急かさない。",open:"時間取ってくれてありがとう。気楽に話そうね。",q:["最近、仕事に慣れてきた？困ってることない？","やってみたいこと、ある？"],motivQ:"何か不安なこと、抱えてない？",closing:"ゆっくりでいいよ。いてくれて助かってる。"},
+"猿":{note:"明るく・すぐ褒める。短いゴールを一緒に決める。",open:"最近がんばってるね！調子どう？",q:["最近で一番『できた！』と思えたことは？","次の目標、何にする？"],motivQ:"今の仕事、楽しめてる？",closing:"さすが〇〇さん。次のゴールも一緒に達成しよう！"},
+"チータ":{note:"短く・テンポよく。長い面談は逆効果。新しい刺激を。",open:"最近どう？面白いこと何かあった？",q:["今ワクワクしてる仕事は？","次に挑戦したいことは？"],motivQ:"マンネリ感じてない？新しく任せたいことがあるんだけど。",closing:"じゃあ早速やってみよう。スピード感、期待してる。"},
+"黒ひょう":{note:"立ててから。人前の指摘はNG。特別感を出す。",open:"〇〇さん、最近センスいいね。話聞かせて。",q:["後輩の様子で気づくこと、ある？","今やってみたい新しいことは？"],motivQ:"任せてほしい役割って、ある？",closing:"さすが〇〇さん。これからも頼りにしてる。"},
+"ライオン":{note:"プライドを立て、裁量と期待で締める。人前の詰めはNG。",open:"今日は〇〇さんに直接聞きたくて。最近、手応えどう？",q:["今の仕事で一番力を出せてる場面は？","3ヶ月後、どうなっていたい？"],motivQ:"何か、任せてほしいことある？",closing:"次まで〇〇を任せる。あなたにしかできないから。"},
+"虎":{note:"余裕を持って・敬意を。チームや後輩の話から入る。",open:"いつもチームを支えてくれてありがとう。今日はゆっくり。",q:["チームで今、気になってることある？","後輩で気にかけてる子はいる？"],motivQ:"もっと任せてほしいこと、ある？",closing:"〇〇さんがいると安心。引き続き頼りにしてる。"},
+"たぬき":{note:"経験を立てて。本音を急に迫らない。",open:"いつも現場を丸く収めてくれて助かってる。最近どう？",q:["経験から見て、今うちで気になることは？","昔と比べてやりやすくなった点・なりにくい点は？"],motivQ:"頼りにしてる。何か困ってることない？",closing:"〇〇さんの経験、これからも聞かせて。"},
+"子守熊":{note:"急かさない・ゆっくり。準備とペースを尊重。",open:"忙しい中ありがとう。今日はゆっくり話そう。",q:["今、見通しを持って進められてる？","準備が足りないと感じてること、ある？"],motivQ:"無理してない？ペースは大丈夫？",closing:"あなたのペースでいい。準備が整ったら進めよう。"},
+"ゾウ":{note:"じっくり・プロとして敬意を。専門性を認める。",open:"いつも丁寧にありがとう。今日はじっくり話そう。",q:["今、専門性を活かせてる実感ある？","もっと極めたい分野は？"],motivQ:"プロとして、もっと任せてほしい領域ある？",closing:"〇〇さんの専門性、頼りにしてる。引き続きお願い。"},
+"ひつじ":{note:"安心させ・感謝を。抱え込みを引き出す。孤立させない。",open:"いつも気を配ってくれてありがとう。今日は〇〇さんの話を聞かせて。",q:["最近、無理してることない？","チームで気になってること、ある？"],motivQ:"何か抱え込んでない？遠慮なく言ってね。",closing:"〇〇さんのおかげでチームが回ってる。ありがとう。"},
+"ペガサス":{note:"自由な雰囲気で。理詰め・束縛はNG。ほめて伸ばす。",open:"最近どう？なんか面白いアイデアない？",q:["今やってて楽しい仕事は？","縛りなく自由にできたら、何やりたい？"],motivQ:"窮屈に感じてること、ない？",closing:"いいね、自由にやってみて。乗ってる〇〇さんは最高だから。"}
 };
 
 /* ═══ 5アニマル（本質＋表面・意思・希望・隠れ）═══ */
@@ -401,7 +419,27 @@ function enrich(s){const[ch,an]=animalOf(s.y,s.m,s.d);return{...s,chara:ch,anima
 function load(){let raw;try{raw=JSON.parse(localStorage.getItem(KEY));}catch(e){}STAFF=(raw&&raw.length?raw:SAMPLE).map(enrich);}
 function save(){localStorage.setItem(KEY,JSON.stringify(STAFF.map(s=>({name:s.name,role:s.role,y:s.y,m:s.m,d:s.d,h:s.h||"",i:s.i||"",kb:s.kb||"",kk:s.kk||"",memo:s.memo||""}))));}
 function updateMemo(v){if(STAFF[curStaff]){STAFF[curStaff].memo=v;save();}}
-function resetData(){if(confirm("サンプルスタッフに戻します。追加したスタッフは消えますがよろしいですか？")){STAFF=SAMPLE.map(enrich);save();buildStaff();}}
+function resetData(){if(confirm("サンプルスタッフに戻します。追加したスタッフは消えますがよろしいですか？")){STAFF=SAMPLE.map(enrich);save();buildStaff();buildCompatPickers();}}
+function exportData(){
+ const data=JSON.stringify(STAFF.map(s=>({name:s.name,role:s.role,y:s.y,m:s.m,d:s.d,h:s.h||"",i:s.i||"",kb:s.kb||"",kk:s.kk||"",memo:s.memo||""})),null,2);
+ const blob=new Blob([data],{type:'application/json'});const url=URL.createObjectURL(blob);
+ const a=document.createElement('a');a.href=url;a.download='animatch-backup-'+new Date().toISOString().slice(0,10)+'.json';
+ document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function importData(input){
+ const file=input.files&&input.files[0];if(!file)return;
+ const reader=new FileReader();
+ reader.onload=function(e){
+  try{const arr=JSON.parse(e.target.result);
+   if(!Array.isArray(arr)||!arr.every(o=>o&&o.name&&o.y&&o.m&&o.d))throw 0;
+   if(!confirm('読み込むと現在の'+STAFF.length+'名を、ファイルの'+arr.length+'名に置き換えます。よろしいですか？')){input.value='';return;}
+   STAFF=arr.map(enrich);save();buildStaff();buildCompatPickers();alert('読み込みました（'+STAFF.length+'名）。');
+  }catch(err){alert('読み込めませんでした。ANIMATCHで書き出したバックアップファイルか確認してください。');}
+  input.value='';
+ };
+ reader.onerror=function(){alert('読み込みに失敗しました。');input.value='';};
+ reader.readAsText(file);
+}
 
 /* ═══ 描画 ═══ */
 function buildStaff(){
@@ -444,9 +482,20 @@ function detail(i){curStaff=i;const s=STAFF[i],p=P[s.animal],gm=GMETA[s.group];
    <div class="box" style="background:#F0FDFA"><div class="bl" style="color:#0F766E">📊 評価のしかた</div><div class="bv">${px.eval}</div></div>
    <div class="box" style="background:#FFF1F2"><div class="bl" style="color:#9F1239">🔋 モチベーション管理</div><div class="bv">${px.motiv}</div></div>
   </div>`;
+ const men=MEN[s.animal],mnm=esc((s.name.split(' ')[0])||s.name);
+ document.getElementById('d-mendan').innerHTML=`
+  <div class="card"><div class="ctitle">面談の心構え（${s.animal}型）</div><div class="ival">${men.note}</div></div>
+  <div class="card">
+   <div class="irow"><div class="ilabel">🟢 オープニング（最初のひと言）</div><div class="ival">「${men.open.replace(/〇〇/g,mnm)}」</div></div>
+   <div class="irow"><div class="ilabel">🌱 成長を促す質問</div><div class="ival">${men.q.map(x=>'・「'+x+'」').join('\n')}</div></div>
+   <div class="irow"><div class="ilabel">🔋 モチベーション確認の質問</div><div class="ival">「${men.motivQ}」</div></div>
+   <div class="irow"><div class="ilabel">🚫 面談でのNGワード</div><div class="ival" style="color:#EF4444">${p.mng}</div></div>
+   <div class="irow"><div class="ilabel">🔚 クロージング（締めの言葉）</div><div class="ival">「${men.closing.replace(/〇〇/g,mnm)}」</div></div>
+  </div>
+  ${s.memo?`<div class="card"><div class="ctitle" style="color:#92400E">👀 面談前に見るメモ</div><div class="ival">${esc(s.memo)}</div></div>`:''}`;
  dtab('k');go('s-detail');
 }
-function dtab(t){curTab=t;document.getElementById('d-karte').style.display=t==='k'?'block':'none';document.getElementById('d-attack').style.display=t==='a'?'block':'none';document.getElementById('t-k').className='tab'+(t==='k'?' active':'');document.getElementById('t-a').className='tab'+(t==='a'?' active':'');}
+function dtab(t){curTab=t;const map={k:'d-karte',a:'d-attack',m:'d-mendan'};Object.keys(map).forEach(x=>{document.getElementById(map[x]).style.display=x===t?'block':'none';document.getElementById('t-'+x).className='tab'+(x===t?' active':'');});}
 function delStaff(i){if(confirm(`${STAFF[i].name} さんを削除しますか？`)){STAFF.splice(i,1);save();buildStaff();go('s-home');}}
 
 /* 5アニマルの帯（本質＋設定済みの顔） */
@@ -567,6 +616,11 @@ function calcCompat(){
   roles=`${Wn}さんが方向を決めるリード役、${Ln}さんが実務・支え役と役割を明文化すると安定する。`;
   advice=`「${GMETA[ga].axis}」と「${GMETA[gb].axis}」の違いを"優劣でなく分担"と捉えると衝突が減る。`;
  }
+ let genba;
+ if(best||score>=80)genba=`同じシフト・持ち場に積極的に組ませてOK。${na}さんと${nb}さんは強いペアになります。教育係×新人の組み合わせにも向きます。`;
+ else if(relType==='same')genba=`同じ持ち場だと張り合う／共倒れの恐れ。役割を分けるか、別の班に散らすと安定します。`;
+ else if(relType==='group')genba=`居心地は良い組み合わせ。ただし二人だけだと「${GMETA[ga].weak}」が出るので、違うタイプを一人混ぜると安心。`;
+ else{const aw=BEATS[ga]===gb,Wn2=aw?na:nb,Ln2=aw?nb:na;genba=`繁忙時は${Wn2}さんに判断、${Ln2}さんに実務、と役割を分ければ強い。余裕がない場面では別の持ち場が無難です。`;}
  const fiveNote=(sa.h&&sb.h)?`<div class="citem"><div class="chead">🎭 初対面での見え方（5アニマル）</div><div class="cbody">${na}さんは表面【${sa.h}】、${nb}さんは表面【${sb.h}】。最初はお互い本質（${a}・${b}）と違う第一印象から入るので、見た目だけで判断しないこと。</div></div>`:'';
  const col=score>=80?'#10B981':score>=68?'#F59E0B':'#6366F1';
  out.innerHTML=`
@@ -577,6 +631,7 @@ function calcCompat(){
    <div class="citem"><div class="chead">🎭 起こりやすいトラブル</div><div class="cbody">${trouble}</div></div>
    <div class="citem"><div class="chead">🧩 役割分担のおすすめ</div><div class="cbody">${roles}</div></div>
    <div class="citem"><div class="chead">💡 改善アドバイス</div><div class="cbody">${advice}</div></div>
+   <div class="citem"><div class="chead">🏠 現場での活かし方</div><div class="cbody">${genba}</div></div>
    ${fiveNote}
   </div>`;
 }
@@ -588,6 +643,7 @@ function pairTension(a,b){
  if(ga===gb)return{score:80,reason:null};
  return{score:66,reason:`${a}と${b}はテンポ・重視点が違い摩擦が出やすい`};
 }
+function pairScore(a,b){const ga=GROUP[a],gb=GROUP[b];let base;if(a===b)base=70;else if(ga===gb)base=80;else base=66;if(isBestMatch(a,b))base=Math.max(base,86);return base;}
 function orgPrescription(top,bottom,leaderCount,funcCov){
  const tips=[];
  if(top==="MOON")tips.push("和を大事にする反面、本音や課題が出にくい。「意見を言う場」を定例化する。");
@@ -615,6 +671,9 @@ function buildOrg(){
  const hot=[],used={};
  for(const p of pairs){if(hot.length>=3)break;if((used[p.a.name]||0)<1&&(used[p.b.name]||0)<1){hot.push(p);used[p.a.name]=1;used[p.b.name]=1;}}
  for(const p of pairs){if(hot.length>=3)break;if(!hot.includes(p))hot.push(p);}
+ const gp=[];for(let i=0;i<STAFF.length;i++)for(let j=i+1;j<STAFF.length;j++){gp.push({a:STAFF[i],b:STAFF[j],sc:pairScore(STAFF[i].animal,STAFF[j].animal)});}
+ gp.sort((x,y)=>y.sc-x.sc);const good=[],gused={};
+ for(const p of gp){if(good.length>=3)break;if((gused[p.a.name]||0)<1&&(gused[p.b.name]||0)<1){good.push(p);gused[p.a.name]=1;gused[p.b.name]=1;}}
  body.innerHTML=`
   <div class="card"><div class="ctitle">3グループ分布（${tot}名）</div>${["MOON","EARTH","SUN"].map(g=>`<div class="dist"><div class="dist-top"><span style="font-weight:700;color:${gcol[g]}">${g}</span><span style="color:#8e8e93">${cnt[g]}名</span></div><div class="dist-bar"><div class="dist-fill" style="background:${gcol[g]};width:${cnt[g]/tot*100}%"></div></div></div>`).join('')}<div style="font-size:11px;color:#8e8e93;margin-top:6px">${top[1]===bottom[1]?'バランスよく分散しています。':`${top[0]}が最多・${bottom[0]}が最少。偏りがあります。`}</div></div>
 
@@ -627,6 +686,8 @@ function buildOrg(){
   <div class="card"><div class="ctitle" style="color:#D97706">⚡ 組織の強み</div><div class="ival">${top[0]}グループが厚い＝${GMETA[top[0]].value}文化が根づいています。この強みを軸にできます。</div></div>
 
   <div class="card"><div class="ctitle" style="color:#EF4444">⚠ 弱み・離職リスク</div><div class="ival">${bottom[0]}グループが手薄＝「${GMETA[bottom[0]].value}」役割が不足。</div>${lone.length?`<div style="font-size:12px;color:#B91C1C;margin-top:8px;background:#FEF2F2;border-radius:9px;padding:9px 11px">🚨 孤立しやすい人：${lone.map(s=>esc(s.name)+'（'+s.group+'唯一）').join('、')}。少数派は職場で浮きやすく離職リスク高め。意識的な声がけを。</div>`:''}</div>
+
+  ${good.length?`<div class="card"><div class="ctitle" style="color:#15803D">🤝 相性の良いペア（積極的に組ませたい）</div>${good.map(g=>`<div style="font-size:12.5px;line-height:1.6;padding:7px 0;border-bottom:1px solid #f4f4f6"><b>${EMOJI[g.a.animal]}${esc(g.a.name)} × ${EMOJI[g.b.animal]}${esc(g.b.name)}</b> <span style="color:#15803D;font-weight:700;font-size:12px">${g.sc}点</span></div>`).join('')}<div style="font-size:11px;color:#8e8e93;margin-top:6px">同じシフトやペア業務に。教育係×新人にも好相性です。</div></div>`:''}
 
   ${hot.length?`<div class="card"><div class="ctitle" style="color:#B91C1C">🔥 衝突ホットスポット（要注意ペア）</div>${hot.map(h=>`<div style="font-size:12.5px;line-height:1.6;padding:7px 0;border-bottom:1px solid #f4f4f6"><b>${EMOJI[h.a.animal]}${esc(h.a.name)} × ${EMOJI[h.b.animal]}${esc(h.b.name)}</b><br><span style="color:#6B7280">${h.reason}</span></div>`).join('')}<div style="font-size:11px;color:#8e8e93;margin-top:6px">→ 役割を分ける／間に調整役（ひつじ・たぬき）を置くと緩和。</div></div>`:''}
 
