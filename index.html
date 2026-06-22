@@ -268,6 +268,22 @@ const P={
 };
 const ALL12=["ライオン","チータ","ゾウ","ペガサス","狼","猿","虎","子守熊","黒ひょう","ひつじ","こじか","たぬき"];
 
+/* ═══ 12タイプ 拡張データ（仕事/対人/理想の上司・部下/評価/モチベ）═══ */
+const PX={
+"狼":{work:"一人で集中して進めると質が上がる。自分の手順とこだわりを持ち、横やりを嫌う。",comm:"口数は少なめで必要なことだけ端的に。雑談より中身。理由が腑に落ちると動く。",boss:"やり方を任せ結果で見てくれる上司。細かく口を出さない人。",sub:"指示の意図を理解し自分で考えて動ける部下。馴れ合いを求めてこない人。",eval:"プロセスより成果物の質で評価。独自性・専門性を具体的に認める。",motiv:"裁量と専門性。任せて口を出さないこと自体が最大の動機づけ。新技術の習得機会も効く。"},
+"こじか":{work:"ていねいで真面目。任されたことはきっちり。慣れるまで時間はかかるが定着すると安定。",comm:"穏やかで聞き役。強い口調や急かしに弱い。安心できる相手には素直に甘える。",boss:"急かさず見守ってくれる上司。失敗を責めず一緒に考えてくれる人。",sub:"素直で誠実な部下。指示を守り嘘をつかない。気にかけると伸びる。",eval:"結果だけでなく努力の過程・誠実さも見る。減点より加点で。",motiv:"安心感と感謝。『助かってる』の一言と急がせない環境。小さな成功体験の積み重ね。"},
+"猿":{work:"要領よく短期で成果。スピード感はあるが飽きやすく、長期・地味な作業は苦手。",comm:"明るくフランク。ノリがよく場を盛り上げる。褒められると一気に乗る。",boss:"成果をすぐ認めて褒める上司。短い目標をくれて達成を一緒に喜ぶ人。",sub:"明るく機動力のある部下。こまめに目標と承認を与えれば猛烈に動く。",eval:"短期の達成を即評価。数字や順位など見える成果を示すと燃える。",motiv:"承認と競争。『さすが』『一番』、短いゴール、人前での称賛。"},
+"チータ":{work:"立ち上がりが速く瞬発力で突破。変化に強い。詰めと継続は苦手。",comm:"テンポが速く結論から。長い説明は飽きる。前向きでサバサバ。",boss:"スピードと挑戦を任せる上司。手順より結果と勢いを買う人。",sub:"立ち上げ・突破役の部下。新規や変化のある仕事を回すと活きる。後処理は別の人に。",eval:"結果とスピードで評価。挑戦したこと自体も認め、失敗を引きずらせない。",motiv:"新しさと一番乗り。『最初にやってみて』『新しいこと任せたい』。マンネリ厳禁。"},
+"黒ひょう":{work:"情報・流行に敏感でセンスを発揮。後輩の面倒見がよい。批判で一気に落ちる。",comm:"スマートで気配り上手。プライドを立てられると伸びる。人前の指摘に弱い。",boss:"センスと面子を立てる上司。特別感を持って任せてくれる人。",sub:"後輩指導を任せられる部下。立ててあげると面倒見よく動く。",eval:"センス・気配り・後輩育成を評価。人前で立て、批判は1対1で。",motiv:"承認と特別扱い。『あなたに任せたい』『さすがセンスいい』。新しい役割。"},
+"ライオン":{work:"全体像から入り主導。責任感が質を高める。細かい管理・反復は苦手で任せたがる。",comm:"結論から端的。議論は歓迎だが長引くと飽きる。立場を尊重されたい。",boss:"裁量を与え結果で評価する上司。プロセスを細かく見ない人。",sub:"指示を確実に実行し陰で支える部下（ひつじ・こじか型が好相性）。",eval:"成果で評価し、立場・面子を立てる。人前での称賛が効く。",motiv:"権限と承認。『あなたに任せる』『さすが』。ナンバーワンを意識させる。"},
+"虎":{work:"どっしり構えバランスよく。慎重で信頼を積む。急かされると力が出ない。",comm:"落ち着いて面倒見がよい。筋を通す。縄張り・メンツを大事にする。",boss:"余裕を持って任せ敬意を払う上司。急かさない人。",sub:"中堅のまとめ役になる部下。後輩の面倒を任せると応える。",eval:"信頼性・包容力・長期貢献を評価。腰を据えた仕事を認める。",motiv:"信頼と任せられること。『あなたのチームなら安心』。テリトリーを尊重。"},
+"たぬき":{work:"経験と根回しで場を回す。古株の安定感。変化は後回しにしがち。",comm:"人当たりよく角を立てない。本音は出さず調整。経験談を語りたい。",boss:"経験を立てて頼る上司。急な変化を一方的に押し付けない人。",sub:"現場を丸く収める部下。若手との橋渡し役に。",eval:"調整力・安定感・経験を評価。変化への対応は理由とともに促す。",motiv:"頼られること・経験の尊重。『経験を聞かせて』『頼りにしてる』。"},
+"子守熊":{work:"マイペースで長期戦に強い。見通しがあると安定。急な変更に弱い。",comm:"ゆったり聞き上手で相談役。せかされると固まる。",boss:"見通しを示し準備期間をくれる上司。急かさず任せる人。",sub:"長期業務を粘り強くこなす部下。準備を整えると力を出す。",eval:"着実さ・持久力・長期成果を評価。短期の遅さで判断しない。",motiv:"安心と見通し。『準備してから進もう』『あなたのペースで』。"},
+"ゾウ":{work:"コツコツ努力家で専門性を極める。完成度優先で時間をかける。頑固。",comm:"まじめで一直線。冗談が通じにくいと思われがち。プロとして扱われたい。",boss:"専門性を認め任せる上司。意義を伝えてくれる人。",sub:"言ったことを必ずやり切る部下。専門領域を任せると第一人者に育つ。",eval:"専門性・努力・やり切る力を評価。プロとして認める。",motiv:"専門性の承認と意義。『さすがプロ』『あなたほど真剣な人はいない』。"},
+"ひつじ":{work:"気配りでチームを支える潤滑油。情報通。NOと言えず抱え込みやすい。",comm:"周りに合わせ和を保つ。本音を飲み込みがち。孤立に弱い。",boss:"存在を認め感謝を言葉にする上司。孤立させない人。",sub:"チームの調和を保つ部下。気配り役を任せ無理をさせない。",eval:"貢献・気配り・チームへの目配りを評価。見えにくい働きを拾う。",motiv:"感謝とつながり。『あなたのおかげ』『いつもありがとう』。孤立させない。"},
+"ペガサス":{work:"直感と自由な発想。乗ると爆発的。ムラがあり、ルールやコツコツは苦手。",comm:"感覚的で気分屋。ほめられて伸びる。束縛・理詰めを嫌う。",boss:"自由にやらせほめる上司。マニュアルで縛らない人。",sub:"企画・発想で光る部下。裁量を与え細かく管理しない。",eval:"発想・スケール・乗ったときの成果を評価。ムラを責めすぎない。",motiv:"自由と称賛。『自由にやって』『面白いね』。ルールで縛らない。"}
+};
+
 /* ═══ 5アニマル（本質＋表面・意思・希望・隠れ）═══ */
 /* 本質は生年月日から自動。他4つは公式サイトで調べて登録（非公開計算のため推測しない）。*/
 const FE={ "ライオン":"堂々と主導権を握ろうとする","チータ":"勢いよく先に動こうとする","ゾウ":"粘り強くやり切ろうとする","ペガサス":"自由きままに直感で動く","狼":"自分のペースを守ろうとする","猿":"明るく要領よく立ち回る","虎":"どっしり構えて周りに気を配る","子守熊":"のんびりじっくり構える","黒ひょう":"スマートに見せ面倒見よく動く","ひつじ":"周りに合わせて和を保とうとする","こじか":"素直にていねいに人へ尽くす","たぬき":"愛嬌よく角を立てずに立ち回る" };
@@ -401,7 +417,7 @@ function detail(i){curStaff=i;const s=STAFF[i],p=P[s.animal],gm=GMETA[s.group];
  document.getElementById('d-name').textContent=s.name;
  document.getElementById('d-hero').style.background=gm.bg;
  document.getElementById('d-hero').innerHTML=`<div class="em">${EMOJI[s.animal]}</div><div class="ch">${s.chara}</div><div class="an">${s.animal}型</div><div class="gb">${gm.label}</div><div class="bd">${s.y}年${s.m}月${s.d}日生まれ · 運命数${unmei(s.y,s.m,s.d)}</div>`;
- const sc60=SUB60[unmei(s.y,s.m,s.d)];
+ const sc60=SUB60[unmei(s.y,s.m,s.d)],px=PX[s.animal];
  document.getElementById('d-karte').innerHTML=`
   ${fiveStrip(s)}
   ${synthesize(s)}
@@ -412,6 +428,8 @@ function detail(i){curStaff=i;const s=STAFF[i],p=P[s.animal],gm=GMETA[s.group];
   <div class="card"><div class="irow"><div class="ilabel">この人を一言で</div><div class="ival">${p.c}</div></div><div class="irow"><div class="ilabel">コアバリュー</div><div class="ival">${p.core}</div></div></div>
   <div class="card"><div class="irow"><div class="ilabel">強み</div><div class="chips">${p.str.map(x=>`<span class="chip g">✅ ${x}</span>`).join('')}</div></div><div class="irow"><div class="ilabel">弱み（折れ点）</div><div class="chips">${p.wk.map(x=>`<span class="chip b">⚠ ${x}</span>`).join('')}</div></div></div>
   <div class="card"><div class="irow"><div class="ilabel">⚡ ストレスサイン</div><div class="ival">${p.stress}</div></div><div class="irow"><div class="ilabel">🔥 やる気が出る言葉</div><div class="ival" style="color:#4F46E5">${p.up}</div></div><div class="irow"><div class="ilabel">🚫 やる気を失う言葉</div><div class="ival" style="color:#EF4444">${p.down}</div></div></div>
+  <div class="card"><div class="irow"><div class="ilabel">💼 仕事スタイル</div><div class="ival">${px.work}</div></div><div class="irow"><div class="ilabel">💬 コミュニケーションスタイル</div><div class="ival">${px.comm}</div></div></div>
+  <div class="card"><div class="irow"><div class="ilabel">😊 相性のいい上司像</div><div class="ival">${px.boss}</div></div><div class="irow"><div class="ilabel">🤝 任せやすい部下像</div><div class="ival">${px.sub}</div></div></div>
   ${fiveAnimalDetail(s)}
   <button class="del-btn" onclick="delStaff(${i})">このスタッフを削除</button>`;
  document.getElementById('d-attack').innerHTML=`
@@ -423,6 +441,8 @@ function detail(i){curStaff=i;const s=STAFF[i],p=P[s.animal],gm=GMETA[s.group];
    <div class="box" style="background:#EFF6FF"><div class="bl" style="color:#1D4ED8">📋 指示の出し方</div><div class="bv">${p.shiji}</div></div>
    <div class="box" style="background:#F5F3FF"><div class="bl" style="color:#6D28D9">🌱 育成方法</div><div class="bv">${p.ikusei}</div></div>
    <div class="box" style="background:#FFF7ED"><div class="bl" style="color:#9A3412">🚫 面談NGワード</div><div class="bv">${p.mng}</div></div>
+   <div class="box" style="background:#F0FDFA"><div class="bl" style="color:#0F766E">📊 評価のしかた</div><div class="bv">${px.eval}</div></div>
+   <div class="box" style="background:#FFF1F2"><div class="bl" style="color:#9F1239">🔋 モチベーション管理</div><div class="bv">${px.motiv}</div></div>
   </div>`;
  dtab('k');go('s-detail');
 }
