@@ -404,6 +404,7 @@ function detail(i){curStaff=i;const s=STAFF[i],p=P[s.animal],gm=GMETA[s.group];
  const sc60=SUB60[unmei(s.y,s.m,s.d)];
  document.getElementById('d-karte').innerHTML=`
   ${fiveStrip(s)}
+  ${synthesize(s)}
   ${subCharCard(s)}
   <div class="ctitle" style="margin:4px 2px 8px">👀 あなたの観察メモ</div>
   <div class="card"><textarea class="memo-area" placeholder="この人を見て気づいたことを書く（例：朝は無口だが午後から調子が上がる／お客様の名前を覚えるのが得意）" oninput="updateMemo(this.value)">${esc(s.memo||'')}</textarea><div style="font-size:10px;color:#8e8e93;margin-top:5px">タイプ＋あなたの観察が、最も正確な"その人だけ"のカルテになります（自動保存）。</div></div>
@@ -445,13 +446,40 @@ function subCharCard(s){
    <div style="font-size:12px;color:#374151;line-height:1.6;background:#F9FAFB;border-radius:9px;padding:9px 11px"><b>同じ${s.animal}型の中でも：</b>${sc.m}</div>
   </div>`;
 }
+/* 本質＋表面＋意思を織り込んだ体系的な人物像（表面と意思が入力されたら自動生成） */
+function synthesize(s){
+ const hon=s.animal,hy=s.h,is=s.i;
+ if(!hy||!is)return '';
+ const gName=esc(s.name);
+ let gap;
+ if(hy===hon)gap=`外に見せる顔も同じ【${hy}】。裏表が少なく、見たままで分かりやすい人です。`;
+ else if(GROUP[hy]===GROUP[hon])gap=`外の顔（${hy}）と中身（${hon}）は方向性が近く、印象と本心は大きくズレません。`;
+ else gap=`外（${hy}）と中身（${hon}）で印象が変わります。第一印象は表面で判断されがちなので、本心は${hon}寄りだと知っておくと誤解が減ります。`;
+ const lead=`${gName}さんは、<b>素は【${hon}】／外では【${hy}】／決断時は【${is}】</b>が出る人です。`;
+ const rows=[
+  `<b>本質（素の自分）｜${hon}</b><br>${P[hon].c}。根っこでは${P[hon].core}を大切にし、${FE[hon]}のが自然体です。`,
+  `<b>表面（外向きの顔）｜${hy}</b><br>初対面やお客様の前では${FE[hy]}ように見えます。${gap}`,
+  `<b>意思決定（決めるクセ）｜${is}</b><br>判断の瞬間は${FE[is]}傾向。決断を促すなら${is}に響く言い方（${(P[is].up||'').replace(/\n/g,'／')}）が効きます。`
+ ];
+ const opt=[];
+ if(s.kb)opt.push(`<b>希望｜${s.kb}</b>：迷ったり疲れたときは${s.kb}のように振る舞いたくなります。`);
+ if(s.kk)opt.push(`<b>隠れ｜${s.kk}</b>：追い込まれると${s.kk}の一面が出ます。`);
+ const summary=`<b>つまり：</b>外では「${hy}」に見え、決めるときは「${is}」、でも根っこは「${P[hon].core}」の人。接するときは本質（${hon}）を尊重しつつ、決断の場面では${is}向けの伝え方を意識すると噛み合います。`;
+ return `<div class="ctitle" style="margin:4px 2px 8px">📖 ${gName}さんの人物像（体系的なまとめ）</div>
+  <div class="card" style="border-left:3px solid var(--ind2)">
+   <div style="font-size:13px;line-height:1.7;margin-bottom:8px">${lead}</div>
+   ${rows.map(r=>`<div style="font-size:12.5px;line-height:1.65;padding:8px 0;border-bottom:1px solid #f4f4f6">${r}</div>`).join('')}
+   ${opt.length?`<div style="font-size:12px;line-height:1.65;padding:8px 0;color:#6B7280">${opt.join('<br>')}</div>`:''}
+   <div style="font-size:12.5px;line-height:1.7;background:#F5F3FF;border-radius:10px;padding:11px;margin-top:8px">${summary}</div>
+  </div>`;
+}
 /* 表面・意思・希望・隠れの解説（未設定ならCTA） */
 function fiveAnimalDetail(s){
  const set=FACETS.filter(f=>s[f.k]);
  if(!set.length){
   const bd=`${s.y}年${s.m}月${s.d}日`;
   return `<div class="ctitle" style="margin:14px 2px 8px">5アニマル ―― 同じ動物でも個別化</div>
-   <div class="cta-card"><div class="ct">「表面・意思・希望・隠れ」は未設定です</div><div class="cd">① 公式サイトを開く → ② <b>${bd}</b> を入力 → ③ 出てきた4匹を「編集」で選ぶだけ。これで同じ動物の人とも違う個別カルテになります。</div><a href="https://www.doubutsu-uranai.com/uranai_chara_5animals.php" target="_blank" rel="noopener">① 公式で調べる ↗</a><button onclick="openEdit(curStaff)">③ 編集して入力</button></div>`;
+   <div class="cta-card"><div class="ct">「表面・意思・希望・隠れ」は未設定です</div><div class="cd">① 公式サイトを開く → ② <b>${bd}</b> を入力 → ③ 出てきた<b>表面・意思</b>を「編集」で選ぶだけ。入れると本質と合わせて<b>人物像が自動で文章化</b>されます（希望・隠れは任意）。</div><a href="https://www.doubutsu-uranai.com/uranai_chara_5animals.php" target="_blank" rel="noopener">① 公式で調べる ↗</a><button onclick="openEdit(curStaff)">③ 編集して入力</button></div>`;
  }
  return `<div class="ctitle" style="margin:14px 2px 8px">5アニマル ―― 本質以外の4つの顔</div>`+
   set.map(f=>`<div class="facet-card"><div class="fh"><span class="fbadge">${f.emoji}</span><span class="ft">${f.label}：${EMOJI[s[f.k]]} ${s[f.k]}</span><span class="facet-pct">${f.pct}</span></div><div class="fsub">${f.sub}</div><div class="fbody" style="margin-top:5px">${f.frame(s[f.k])}</div></div>`).join('');
