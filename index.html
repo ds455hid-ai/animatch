@@ -41,6 +41,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic',sa
 .sname{font-size:14px;font-weight:700;color:#1c1c1e;}
 .ssub{font-size:11px;color:#8e8e93;margin-top:2px;}
 .gbadge{font-size:9px;font-weight:800;padding:2px 7px;border-radius:20px;display:inline-block;}
+.pos-badge{font-size:9px;font-weight:700;padding:1px 6px;border-radius:5px;background:#1c1c1e;color:#fff;display:inline-block;vertical-align:middle;}
 .g-MOON{background:#EDE9FE;color:#7C3AED;}.g-EARTH{background:#DBEAFE;color:#2563EB;}.g-SUN{background:#FEF3C7;color:#D97706;}
 .chev{color:#C7C7CC;font-size:14px;}
 .empty{text-align:center;color:#8e8e93;font-size:13px;padding:30px 10px;line-height:1.7;}
@@ -204,8 +205,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic',sa
 
   <!-- ORG -->
   <div class="scr" id="s-org">
-    <div class="hdr"><div><div class="logo" style="font-size:16px">組織分析</div><div class="sub">在籍スタッフから自動算出</div></div></div>
-    <div class="scroll" id="org-body"></div>
+    <div class="hdr"><div><div class="logo" style="font-size:16px">組織分析</div><div class="sub">店舗・部署・役職で見る</div></div></div>
+    <div class="scroll">
+      <div class="card"><div class="ctitle">組織の見方（絞り込み）</div>
+        <div class="cmp-row"><label>店舗</label><select id="orgStore" onchange="buildOrg()"></select></div>
+        <div class="cmp-row" style="margin-top:8px"><label>部署</label><select id="orgDept" onchange="buildOrg()"></select></div>
+      </div>
+      <div id="org-body"></div>
+    </div>
     <div class="nav" id="nav-org"></div>
   </div>
 
@@ -229,6 +236,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic',sa
       <div class="field"><input id="f-d" type="number" inputmode="numeric" placeholder="15" oninput="updatePreview()"></div><span>日</span>
     </div>
     <div class="preview" id="preview"><div class="ph">↑ 生年月日を入れると本質タイプが表示されます</div></div>
+    <div class="sheet-section">組織での位置づけ</div>
+    <div class="field"><label>役職</label><select id="f-pos" onchange="onPosChange()"></select></div>
+    <div class="facet-grid">
+      <div class="facet-sel"><label>店舗</label><select id="f-store"></select></div>
+      <div class="facet-sel"><label>部署</label><select id="f-dept"></select></div>
+    </div>
     <div class="sheet-section">5アニマル（任意・同じ動物でも個別化）<a href="https://www.doubutsu-uranai.com/uranai_chara_5animals.php" target="_blank" rel="noopener">公式で調べる ↗</a></div>
     <div style="font-size:11px;color:#8e8e93;line-height:1.6;margin-bottom:8px;">「公式で調べる」を開き、上で入れた生年月日を入力 → 出てきた<b>表面・意思・希望・隠れ</b>を下で選ぶだけ。（空欄のままでもOK）</div>
     <div class="facet-grid" id="facet-grid"></div>
@@ -326,6 +339,18 @@ const BESTMATCH=new Set(["ライオン|チータ","たぬき|ライオン","狼|
 function pairKey(a,b){return [a,b].sort().join("|");}
 function isBestMatch(a,b){return BESTMATCH.has(pairKey(a,b));}
 
+/* ═══ 組織（店舗・部署・役職）═══ */
+const STORES=["山しのぶ","草太郎庵","禪墅","全社"];
+const DEPTS=["フロント","調理場","営繕","経営"];
+const POSITIONS=["社長","女将","若女将","総支配人","山しのぶ支配人","草太郎支配人","山しのぶサービス長","山しのぶ料理長","草太郎料理長","禪墅料理長","営繕長","一般従業員"];
+const POSMETA={
+ "社長":{rank:1,store:"全社",dept:"経営"},"女将":{rank:2,store:"全社",dept:"経営"},"若女将":{rank:3,store:"全社",dept:"経営"},"総支配人":{rank:4,store:"全社",dept:"経営"},
+ "山しのぶ支配人":{rank:5,store:"山しのぶ",dept:"経営"},"草太郎支配人":{rank:5,store:"草太郎庵",dept:"経営"},
+ "山しのぶサービス長":{rank:6,store:"山しのぶ",dept:"フロント"},"山しのぶ料理長":{rank:6,store:"山しのぶ",dept:"調理場"},"草太郎料理長":{rank:6,store:"草太郎庵",dept:"調理場"},"禪墅料理長":{rank:6,store:"禪墅",dept:"調理場"},"営繕長":{rank:6,store:"全社",dept:"営繕"},
+ "一般従業員":{rank:7,store:"",dept:""}
+};
+function posRank(p){return (POSMETA[p]&&POSMETA[p].rank)||7;}
+
 /* ═══ 60分類キャラ（運命数で自動・同じ動物でも個別化）═══ */
 /* 公式の60キャラ名（検証済み）＋基本動物特性をもとにした個別特徴。生年月日のみで確定。*/
 const SUB60={
@@ -404,24 +429,25 @@ const POS=[
 /* ═══ データ保存（localStorage）═══ */
 const KEY='animatch_staff_v1';
 const SAMPLE=[
- {name:"佐藤 健",role:"フロント主任",y:1979,m:11,d:3,h:"ライオン",i:"狼",kb:"ゾウ",kk:"チータ"},
- {name:"田中 恵",role:"接客スタッフ",y:1988,m:7,d:25,h:"猿",i:"虎",kb:"ペガサス",kk:"ひつじ"},
- {name:"鈴木 美咲",role:"仲居",y:1995,m:2,d:12,h:"ひつじ",i:"こじか",kb:"ペガサス",kk:"たぬき"},
- {name:"山田 洋介",role:"料理長",y:1973,m:12,d:15},
- {name:"中村 由美",role:"客室清掃",y:1992,m:9,d:18},
- {name:"小林 大輔",role:"営繕",y:2000,m:1,d:1},
- {name:"加藤 さくら",role:"接客スタッフ",y:1998,m:6,d:30},
- {name:"渡辺 翔",role:"調理",y:2001,m:3,d:22},
- {name:"吉田 真",role:"接客スタッフ",y:1985,m:1,d:4},
+ {name:"佐藤 健",role:"フロント主任",y:1979,m:11,d:3,h:"ライオン",i:"狼",kb:"ゾウ",kk:"チータ",store:"山しのぶ",dept:"フロント",position:"山しのぶサービス長"},
+ {name:"田中 恵",role:"接客スタッフ",y:1988,m:7,d:25,h:"猿",i:"虎",kb:"ペガサス",kk:"ひつじ",store:"山しのぶ",dept:"フロント",position:"一般従業員"},
+ {name:"鈴木 美咲",role:"仲居",y:1995,m:2,d:12,h:"ひつじ",i:"こじか",kb:"ペガサス",kk:"たぬき",store:"山しのぶ",dept:"フロント",position:"一般従業員"},
+ {name:"山田 洋介",role:"料理長",y:1973,m:12,d:15,store:"山しのぶ",dept:"調理場",position:"山しのぶ料理長"},
+ {name:"中村 由美",role:"客室清掃",y:1992,m:9,d:18,store:"山しのぶ",dept:"フロント",position:"一般従業員"},
+ {name:"小林 大輔",role:"営繕",y:2000,m:1,d:1,store:"全社",dept:"営繕",position:"営繕長"},
+ {name:"加藤 さくら",role:"接客スタッフ",y:1998,m:6,d:30,store:"草太郎庵",dept:"フロント",position:"一般従業員"},
+ {name:"渡辺 翔",role:"調理",y:2001,m:3,d:22,store:"草太郎庵",dept:"調理場",position:"草太郎料理長"},
+ {name:"吉田 真",role:"調理",y:1985,m:1,d:4,store:"禪墅",dept:"調理場",position:"禪墅料理長"},
 ];
 let STAFF=[];
-function enrich(s){const[ch,an]=animalOf(s.y,s.m,s.d);return{...s,chara:ch,animal:an,group:GROUP[an]};}
+function enrich(s){const[ch,an]=animalOf(s.y,s.m,s.d);return{...s,chara:ch,animal:an,group:GROUP[an],store:s.store||'山しのぶ',dept:s.dept||'フロント',position:s.position||'一般従業員'};}
 function load(){let raw;try{raw=JSON.parse(localStorage.getItem(KEY));}catch(e){}STAFF=(raw&&raw.length?raw:SAMPLE).map(enrich);}
-function save(){localStorage.setItem(KEY,JSON.stringify(STAFF.map(s=>({name:s.name,role:s.role,y:s.y,m:s.m,d:s.d,h:s.h||"",i:s.i||"",kb:s.kb||"",kk:s.kk||"",memo:s.memo||""}))));}
+function serializeStaff(s){return{name:s.name,role:s.role,y:s.y,m:s.m,d:s.d,h:s.h||"",i:s.i||"",kb:s.kb||"",kk:s.kk||"",memo:s.memo||"",store:s.store||"山しのぶ",dept:s.dept||"フロント",position:s.position||"一般従業員"};}
+function save(){localStorage.setItem(KEY,JSON.stringify(STAFF.map(serializeStaff)));}
 function updateMemo(v){if(STAFF[curStaff]){STAFF[curStaff].memo=v;save();}}
 function resetData(){if(confirm("サンプルスタッフに戻します。追加したスタッフは消えますがよろしいですか？")){STAFF=SAMPLE.map(enrich);save();buildStaff();buildCompatPickers();}}
 function exportData(){
- const data=JSON.stringify(STAFF.map(s=>({name:s.name,role:s.role,y:s.y,m:s.m,d:s.d,h:s.h||"",i:s.i||"",kb:s.kb||"",kk:s.kk||"",memo:s.memo||""})),null,2);
+ const data=JSON.stringify(STAFF.map(serializeStaff),null,2);
  const blob=new Blob([data],{type:'application/json'});const url=URL.createObjectURL(blob);
  const a=document.createElement('a');a.href=url;a.download='animatch-backup-'+new Date().toISOString().slice(0,10)+'.json';
  document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(()=>URL.revokeObjectURL(url),1000);
@@ -446,7 +472,7 @@ function buildStaff(){
  document.getElementById('home-sub').textContent=`山しのぶ旅館 · ${STAFF.length}名登録`;
  const el=document.getElementById('staff-list');
  if(!STAFF.length){el.innerHTML=`<div class="empty">まだスタッフがいません。<br>上の「＋ スタッフを追加」から登録してください。</div>`;return;}
- el.innerHTML=STAFF.map((s,i)=>`<div class="srow" onclick="detail(${i})"><div class="semoji" style="background:${gbg(s.group)}">${EMOJI[s.animal]}</div><div class="sinfo"><div class="sname">${esc(s.name)}</div><div class="ssub">${esc(s.role||'')}${s.role?' · ':''}${s.animal}型 <span class="gbadge g-${s.group}">${s.group}</span></div></div><span class="chev">›</span></div>`).join('');
+ el.innerHTML=STAFF.map((s,i)=>`<div class="srow" onclick="detail(${i})"><div class="semoji" style="background:${gbg(s.group)}">${EMOJI[s.animal]}</div><div class="sinfo"><div class="sname">${esc(s.name)}${s.position&&s.position!=='一般従業員'?` <span class="pos-badge">${esc(s.position)}</span>`:''}</div><div class="ssub">${esc(s.store||'')} · ${esc(s.dept||'')} · ${s.animal}型 <span class="gbadge g-${s.group}">${s.group}</span></div></div><span class="chev">›</span></div>`).join('');
 }
 function esc(t){return(t||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 
@@ -559,17 +585,26 @@ let editIndex=null;
 function buildFacetSelects(vals){
  document.getElementById('facet-grid').innerHTML=FACETS.map(f=>`<div class="facet-sel"><label>${f.emoji} ${f.label}</label><select id="f-${f.k}"><option value="">未設定</option>${ALL12.map(a=>`<option value="${a}"${vals&&vals[f.k]===a?' selected':''}>${EMOJI[a]} ${a}</option>`).join('')}</select></div>`).join('');
 }
+function fillOrgSelects(s){
+ document.getElementById('f-pos').innerHTML=POSITIONS.map(p=>`<option value="${p}">${p}</option>`).join('');
+ document.getElementById('f-store').innerHTML=STORES.map(x=>`<option value="${x}">${x}</option>`).join('');
+ document.getElementById('f-dept').innerHTML=DEPTS.map(x=>`<option value="${x}">${x}</option>`).join('');
+ document.getElementById('f-pos').value=(s&&s.position)||'一般従業員';
+ document.getElementById('f-store').value=(s&&s.store)||'山しのぶ';
+ document.getElementById('f-dept').value=(s&&s.dept)||'フロント';
+}
+function onPosChange(){const m=POSMETA[document.getElementById('f-pos').value];if(m&&m.store){document.getElementById('f-store').value=m.store;document.getElementById('f-dept').value=m.dept;}}
 function showSheet(){document.getElementById('sheet-bg').classList.add('show');document.getElementById('sheet').classList.add('show');document.getElementById('sheet').scrollTop=0;}
-function openSheet(){editIndex=null;document.getElementById('sheet-title').textContent='スタッフを追加';['f-name','f-role','f-y','f-m','f-d'].forEach(id=>document.getElementById(id).value='');buildFacetSelects(null);updatePreview();showSheet();}
-function openEdit(i){editIndex=i;const s=STAFF[i];document.getElementById('sheet-title').textContent='スタッフを編集';document.getElementById('f-name').value=s.name;document.getElementById('f-role').value=s.role||'';document.getElementById('f-y').value=s.y;document.getElementById('f-m').value=s.m;document.getElementById('f-d').value=s.d;buildFacetSelects(s);updatePreview();showSheet();}
+function openSheet(){editIndex=null;document.getElementById('sheet-title').textContent='スタッフを追加';['f-name','f-role','f-y','f-m','f-d'].forEach(id=>document.getElementById(id).value='');buildFacetSelects(null);fillOrgSelects(null);updatePreview();showSheet();}
+function openEdit(i){editIndex=i;const s=STAFF[i];document.getElementById('sheet-title').textContent='スタッフを編集';document.getElementById('f-name').value=s.name;document.getElementById('f-role').value=s.role||'';document.getElementById('f-y').value=s.y;document.getElementById('f-m').value=s.m;document.getElementById('f-d').value=s.d;buildFacetSelects(s);fillOrgSelects(s);updatePreview();showSheet();}
 function closeSheet(){document.getElementById('sheet-bg').classList.remove('show');document.getElementById('sheet').classList.remove('show');}
-function readForm(){const y=+document.getElementById('f-y').value,m=+document.getElementById('f-m').value,d=+document.getElementById('f-d').value,name=document.getElementById('f-name').value.trim();const valid=name&&y>1900&&y<2100&&m>=1&&m<=12&&d>=1&&d<=31;const fac={};FACETS.forEach(f=>{const el=document.getElementById('f-'+f.k);fac[f.k]=el?el.value:'';});return{y,m,d,name,valid,...fac};}
+function readForm(){const y=+document.getElementById('f-y').value,m=+document.getElementById('f-m').value,d=+document.getElementById('f-d').value,name=document.getElementById('f-name').value.trim();const valid=name&&y>1900&&y<2100&&m>=1&&m<=12&&d>=1&&d<=31;const fac={};FACETS.forEach(f=>{const el=document.getElementById('f-'+f.k);fac[f.k]=el?el.value:'';});const gp=document.getElementById('f-pos'),gs=document.getElementById('f-store'),gd=document.getElementById('f-dept');return{y,m,d,name,valid,...fac,position:gp?gp.value:'一般従業員',store:gs?gs.value:'山しのぶ',dept:gd?gd.value:'フロント'};}
 function updatePreview(){const f=readForm();const pv=document.getElementById('preview');const btn=document.getElementById('save-btn');
  if(f.y>1900&&f.y<2100&&f.m>=1&&f.m<=12&&f.d>=1&&f.d<=31){const[ch,an]=animalOf(f.y,f.m,f.d);const g=GROUP[an];pv.innerHTML=`<div class="pem">${EMOJI[an]}</div><div class="pinfo"><div class="pan">本質：${an}型 <span class="gbadge g-${g}" style="vertical-align:middle">${g}</span></div><div class="pch">${ch}</div></div>`;}
  else{pv.innerHTML=`<div class="ph">↑ 生年月日を入れると本質タイプが表示されます</div>`;}
  btn.disabled=!f.valid;
 }
-function saveStaff(){const f=readForm();if(!f.valid)return;const wasEdit=editIndex;const prevMemo=(wasEdit!=null&&STAFF[wasEdit])?STAFF[wasEdit].memo:'';const obj=enrich({name:f.name,role:document.getElementById('f-role').value.trim(),y:f.y,m:f.m,d:f.d,h:f.h,i:f.i,kb:f.kb,kk:f.kk,memo:prevMemo});if(wasEdit!=null)STAFF[wasEdit]=obj;else STAFF.push(obj);save();buildStaff();closeSheet();editIndex=null;if(wasEdit!=null)detail(wasEdit);}
+function saveStaff(){const f=readForm();if(!f.valid)return;const wasEdit=editIndex;const prevMemo=(wasEdit!=null&&STAFF[wasEdit])?STAFF[wasEdit].memo:'';const obj=enrich({name:f.name,role:document.getElementById('f-role').value.trim(),y:f.y,m:f.m,d:f.d,h:f.h,i:f.i,kb:f.kb,kk:f.kk,memo:prevMemo,position:f.position,store:f.store,dept:f.dept});if(wasEdit!=null)STAFF[wasEdit]=obj;else STAFF.push(obj);save();buildStaff();closeSheet();editIndex=null;if(wasEdit!=null)detail(wasEdit);}
 
 /* ═══ 相性 ═══ */
 let cmpA=0,cmpB=1;
@@ -654,27 +689,55 @@ function orgPrescription(top,bottom,leaderCount,funcCov){
  tips.push(`不足しがちな${bottom}グループの視点（${GMETA[bottom].value}）を、会議や評価で意識的に拾う。`);
  return tips.map(t=>"・"+t).join("\n");
 }
+function buildOrgFilters(){
+ const ss=document.getElementById('orgStore'),ds=document.getElementById('orgDept');
+ if(!ss||!ds)return;
+ const sv=ss.value||'すべて',dv=ds.value||'すべて';
+ ss.innerHTML=['すべて'].concat(STORES).map(x=>`<option value="${x}">${x==='すべて'?'すべての店舗':x}</option>`).join('');
+ ds.innerHTML=['すべて'].concat(DEPTS).map(x=>`<option value="${x}">${x==='すべて'?'すべての部署':x}</option>`).join('');
+ ss.value=sv;ds.value=dv;
+}
+function orgOverview(){
+ const byStore={},byDept={};STAFF.forEach(s=>{byStore[s.store]=(byStore[s.store]||0)+1;byDept[s.dept]=(byDept[s.dept]||0)+1;});
+ const row=(o)=>Object.entries(o).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<span class="chip" style="background:#F3F4F6;color:#374151">${k} ${v}名</span>`).join(' ');
+ return `<div class="card"><div class="ctitle">全体（${STAFF.length}名）</div><div style="font-size:11px;font-weight:700;color:#8e8e93;margin-bottom:4px">店舗別</div><div class="chips" style="margin-bottom:9px">${row(byStore)}</div><div style="font-size:11px;font-weight:700;color:#8e8e93;margin-bottom:4px">部署別</div><div class="chips">${row(byDept)}</div></div>`;
+}
+function orgRoster(list,sv,dv){
+ const sorted=[...list].sort((a,b)=>posRank(a.position)-posRank(b.position));
+ const ttl=(sv==='すべて'?'全店舗':sv)+'／'+(dv==='すべて'?'全部署':dv);
+ return `<div class="card"><div class="ctitle">メンバー（${ttl}・役職順）</div>${sorted.map(s=>{const idx=STAFF.indexOf(s);const titled=s.position&&s.position!=='一般従業員';return `<div class="srow" style="padding:9px 0" onclick="detail(${idx})"><div class="semoji" style="background:${gbg(s.group)};width:38px;height:38px;font-size:22px">${EMOJI[s.animal]}</div><div class="sinfo"><div class="sname" style="font-size:13px">${esc(s.name)}${titled?` <span class="pos-badge">${esc(s.position)}</span>`:''}</div><div class="ssub">${esc(s.store)} · ${esc(s.dept)} · ${s.animal}型</div></div><span class="chev">›</span></div>`;}).join('')}</div>`;
+}
 function buildOrg(){
  const body=document.getElementById('org-body');
+ buildOrgFilters();
  if(!STAFF.length){body.innerHTML=`<div class="empty">スタッフを登録すると組織分析が表示されます。</div>`;return;}
- const cnt={MOON:0,EARTH:0,SUN:0},acnt={};STAFF.forEach(s=>{cnt[s.group]++;acnt[s.animal]=(acnt[s.animal]||0)+1;});
- const tot=STAFF.length;const gcol={MOON:"#7C3AED",EARTH:"#2563EB",SUN:"#F59E0B"};
+ const sv=document.getElementById('orgStore')?document.getElementById('orgStore').value:'すべて';
+ const dv=document.getElementById('orgDept')?document.getElementById('orgDept').value:'すべて';
+ const list=STAFF.filter(s=>(sv==='すべて'||s.store===sv)&&(dv==='すべて'||s.dept===dv));
+ const overview=(sv==='すべて'&&dv==='すべて')?orgOverview():'';
+ const roster=orgRoster(list,sv,dv);
+ const analysis=list.length?orgAnalysis(list):`<div class="card"><div class="empty">この絞り込みに該当するスタッフがいません。</div></div>`;
+ body.innerHTML=overview+roster+analysis;
+}
+function orgAnalysis(list){
+ const cnt={MOON:0,EARTH:0,SUN:0},acnt={};list.forEach(s=>{cnt[s.group]++;acnt[s.animal]=(acnt[s.animal]||0)+1;});
+ const tot=list.length;const gcol={MOON:"#7C3AED",EARTH:"#2563EB",SUN:"#F59E0B"};
  const missing=ALL12.filter(a=>!acnt[a]);
  const sorted=Object.entries(cnt).sort((x,y)=>y[1]-x[1]);
  const top=sorted[0],bottom=sorted[2];
- const funcCov=ORGFUNC.map(f=>({...f,c:STAFF.filter(s=>f.animals.includes(s.animal)).length}));
- const leaderStaff=STAFF.filter(s=>LEADERS.includes(s.animal));
- const lone=STAFF.filter(s=>cnt[s.group]===1);
+ const funcCov=ORGFUNC.map(f=>({...f,c:list.filter(s=>f.animals.includes(s.animal)).length}));
+ const leaderStaff=list.filter(s=>LEADERS.includes(s.animal));
+ const lone=list.filter(s=>cnt[s.group]===1);
  const present=ALL12.filter(a=>acnt[a]).map(a=>`${EMOJI[a]}${a}×${acnt[a]}`);
- const pairs=[];for(let i=0;i<STAFF.length;i++)for(let j=i+1;j<STAFF.length;j++){const t=pairTension(STAFF[i].animal,STAFF[j].animal);if(t.reason)pairs.push({a:STAFF[i],b:STAFF[j],...t});}
+ const pairs=[];for(let i=0;i<list.length;i++)for(let j=i+1;j<list.length;j++){const t=pairTension(list[i].animal,list[j].animal);if(t.reason)pairs.push({a:list[i],b:list[j],...t});}
  pairs.sort((x,y)=>x.score-y.score);
  const hot=[],used={};
  for(const p of pairs){if(hot.length>=3)break;if((used[p.a.name]||0)<1&&(used[p.b.name]||0)<1){hot.push(p);used[p.a.name]=1;used[p.b.name]=1;}}
  for(const p of pairs){if(hot.length>=3)break;if(!hot.includes(p))hot.push(p);}
- const gp=[];for(let i=0;i<STAFF.length;i++)for(let j=i+1;j<STAFF.length;j++){gp.push({a:STAFF[i],b:STAFF[j],sc:pairScore(STAFF[i].animal,STAFF[j].animal)});}
+ const gp=[];for(let i=0;i<list.length;i++)for(let j=i+1;j<list.length;j++){gp.push({a:list[i],b:list[j],sc:pairScore(list[i].animal,list[j].animal)});}
  gp.sort((x,y)=>y.sc-x.sc);const good=[],gused={};
  for(const p of gp){if(good.length>=3)break;if((gused[p.a.name]||0)<1&&(gused[p.b.name]||0)<1){good.push(p);gused[p.a.name]=1;gused[p.b.name]=1;}}
- body.innerHTML=`
+ return `
   <div class="card"><div class="ctitle">3グループ分布（${tot}名）</div>${["MOON","EARTH","SUN"].map(g=>`<div class="dist"><div class="dist-top"><span style="font-weight:700;color:${gcol[g]}">${g}</span><span style="color:#8e8e93">${cnt[g]}名</span></div><div class="dist-bar"><div class="dist-fill" style="background:${gcol[g]};width:${cnt[g]/tot*100}%"></div></div></div>`).join('')}<div style="font-size:11px;color:#8e8e93;margin-top:6px">${top[1]===bottom[1]?'バランスよく分散しています。':`${top[0]}が最多・${bottom[0]}が最少。偏りがあります。`}</div></div>
 
   <div class="card"><div class="ctitle">12タイプの内訳</div><div style="font-size:13px;line-height:1.9">${present.join('  /  ')}</div>${missing.length?`<div style="font-size:11px;color:#8e8e93;margin-top:6px">在籍なし：${missing.map(a=>EMOJI[a]+a).join(' ')}</div>`:''}</div>
